@@ -3,7 +3,63 @@
 # numeric values in the dataset to meaningful labels. It only includes the
 # variables that were recoded to numeric labels. 
 
-codebook = {
+codebook = { 
+    'journal_code': {
+        'Journal of Applied Psychology': 0,
+        'Personnel Psychology': 1,
+        'Academy of Management Journal': 2,
+        'Organizational Research Methods': 3,
+        'Journal of Management': 4,
+        'Organizational Behavior and Human Decision Processes': 5,
+        'Journal of Organizational Behavior': 6,
+        'The Leadership Quarterly': 7,
+        'Journal of Occupational Health Psychology': 8,
+        'Journal of Vocational Behavior': 9,
+        'Journal of Business and Psychology': 10,
+        'Journal of Occupational and Organizational Psychology': 11,
+        'Educational and Psychological Measurement': 12,
+        'Journal of Applied Social Psychology': 13,
+        'Academy of Management Learning and Education': 14,
+        'International Journal of Selection and Assessment': 15,
+        'European Journal of Work and Organizational Psychology': 16,
+        'Human Performance': 17,
+        'Human Relations': 18,
+        'Personality and Individual Differences': 19,
+        'Applied Psychology: An International Review': 20,
+        'Work & Stress': 21,
+        'Group and Organization Management': 22,
+        'Journal of Personnel Psychology': 23,
+        'Journal of Managerial Psychology': 24,
+        'Dissertations': 25
+    },
+    'journal': {
+        0: 'Journal of Applied Psychology',
+        1: 'Personnel Psychology',
+        2: 'Academy of Management Journal',
+        3: 'Organizational Research Methods',
+        4: 'Journal of Management',
+        5: 'Organizational Behavior and Human Decision Processes',
+        6: 'Journal of Organizational Behavior',
+        7: 'The Leadership Quarterly',
+        8: 'Journal of Occupational Health Psychology',
+        9: 'Journal of Vocational Behavior',
+        10: 'Journal of Business and Psychology',
+        11: 'Journal of Occupational and Organizational Psychology',
+        12: 'Educational and Psychological Measurement',
+        13: 'Journal of Applied Social Psychology',
+        14: 'Academy of Management Learning and Education',
+        15: 'International Journal of Selection and Assessment',
+        16: 'European Journal of Work and Organizational Psychology',
+        17: 'Human Performance',
+        18: 'Human Relations',
+        19: 'Personality and Individual Differences',
+        20: 'Applied Psychology: An International Review',
+        21: 'Work & Stress',
+        22: 'Group and Organization Management',
+        23: 'Journal of Personnel Psychology',
+        24: 'Journal of Managerial Psychology',
+        25: 'Dissertations'
+    },
     'sample_source': {
         0: 'student',
         1: 'employee',
@@ -84,7 +140,7 @@ codebook = {
         'bogus_items': [0],
         'consistency_indices': [9, 10, 11],
         'response_pattern': [2, 3],
-        'self-reported': [6, 7, 8]
+        'self_reported': [6, 7, 8]
     },
     'design_time': {
         -1: '',
