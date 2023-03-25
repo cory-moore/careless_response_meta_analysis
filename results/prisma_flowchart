@@ -1,0 +1,31 @@
+digraph {
+	node [fontsize=16 height=1.25 shape=rectangle style=rounded width=2.5]
+	edge [fontsize=16]
+	"Studies identified from databases"
+	"Studies identified from databases" -> Screening
+	"Studies identified from other sources"
+	"Studies identified from other sources" -> Screening
+	Screening
+	Screening -> "Studies deemed eligible and assigned for coding"
+	"Studies deemed eligible and assigned for coding"
+	"Studies deemed eligible and assigned for coding" -> "Preliminary studies included in this presentation"
+	"Studies deemed eligible and assigned for coding" -> "Studies included in meta-analysis"
+	"Studies included in meta-analysis"
+	"Preliminary studies included in this presentation"
+	"Studies included in meta-analysis" [fillcolor="#59a14f" fontcolor=white height=1 shape=ellipse style=filled width=2]
+	"Preliminary studies included in this presentation" [fillcolor="#e15759" fontcolor=white height=1 shape=ellipse style=filled width=2]
+	"Studies identified from databases" [label="Studies identified from databases
+PsycINFO (n = ),
+ProQuest Dissertations & Theses Global (n = 85)" fontsize=14]
+	"Studies identified from other sources" [label="Studies identified from other sources
+Citation Searches (n = )" fontsize=14]
+	Screening [label="Screening
+Identified studies were screened based on the following criteria:
+- Appeared in a journal article or dissertation
+- Published in an IO journal from Highhouse, Zickar, & Melick (2020)
+- Must report amount of careless responding detected in sample
+- Must report techniques used to detect careless responding
+- Must NOT have manipulated careless responding behavior" fontsize=14]
+	"Studies deemed eligible and assigned for coding" [label="Studies deemed eligible and assigned for coding
+(n = )" fontsize=14]
+}
