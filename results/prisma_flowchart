@@ -12,8 +12,8 @@ digraph {
 	"Studies deemed eligible and assigned for coding" -> "Studies included in meta-analysis"
 	"Studies included in meta-analysis"
 	"Preliminary studies included in this presentation"
-	"Studies included in meta-analysis" [fillcolor="#59a14f" fontcolor=white height=1 shape=ellipse style=filled width=2]
-	"Preliminary studies included in this presentation" [fillcolor="#e15759" fontcolor=white height=1 shape=ellipse style=filled width=2]
+	"Studies included in meta-analysis" [fillcolor="#59a14f" fontcolor=white height=1 shape=ellipse style=filled width=1.5]
+	"Preliminary studies included in this presentation" [fillcolor="#e15759" fontcolor=white height=1 shape=ellipse style=filled width=1.5]
 	"Studies identified from databases" [label="Studies identified from databases
 PsycINFO (n = ),
 ProQuest Dissertations & Theses Global (n = 85)" fontsize=14]

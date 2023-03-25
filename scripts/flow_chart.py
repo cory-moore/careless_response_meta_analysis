@@ -26,8 +26,8 @@ for node, children in data.items():
         dot.edge(node, child)
 
 # Set the attributes for the end nodes
-dot.node('Studies included in meta-analysis', shape='ellipse', width='2', height='1', style='filled', fillcolor='#59a14f', fontcolor='white')
-dot.node('Preliminary studies included in this presentation', shape='ellipse', width='2', height='1', style='filled', fillcolor='#e15759', fontcolor='white')
+dot.node('Studies included in meta-analysis', shape='ellipse', width='1.5', height='1', style='filled', fillcolor='#59a14f', fontcolor='white')
+dot.node('Preliminary studies included in this presentation', shape='ellipse', width='1.5', height='1', style='filled', fillcolor='#e15759', fontcolor='white')
 
 # Add the labels for the nodes
 dot.node('Studies identified from databases', label='Studies identified from databases\nPsycINFO (n = ),\nProQuest Dissertations & Theses Global (n = 85)', fontsize='14')
