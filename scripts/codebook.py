@@ -78,6 +78,14 @@ codebook = {
         10: 'PsySyn',
         11: 'PsyAnt'
     },
+    'cr_method_type': {
+        'response_time': [1],
+        'outlier_analysis': [4, 5],
+        'bogus_items': [0],
+        'consistency_indices': [9, 10, 11],
+        'response_pattern': [2, 3],
+        'self-reported': [6, 7, 8]
+    },
     'design_time': {
         -1: '',
         0: 'cross-sectional',

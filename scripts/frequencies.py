@@ -3,9 +3,10 @@ import pandas as pd
 
 from collections import Counter
 from scripts.codebook import codebook
+from scripts.util import add_cr_method_type
 
 
-#------------------------------------------------------------------------------------------------------------------------------
+#----- Functions ------------------------------------------------------------------------------------------------------------------
 def get_frequencies(data, variable):
     counter = Counter(data[variable])
     total = sum(counter.values())
@@ -33,21 +34,6 @@ def get_cr_method_frequencies(data):
     cr_freq.columns = ['cr_method', 'code', 'count', 'percentage']
     return cr_freq
 
-def add_cr_method_type(data):
-    cr_columns = ['cr_1_method', 'cr_2_method', 'cr_3_method', 'cr_4_method']
-    cr_method_type_map = {
-        'response_time': [1],
-        'outlier_analysis': [4, 5],
-        'bogus_items': [0],
-        'consistency_indices': [9, 10, 11],
-        'response_pattern': [2, 3],
-        'self-reported': [6, 7, 8]
-    }
-    # Loop over the cr_columns and add a new column for each cr_method type
-    for col in cr_columns:
-        new_col = col + '_type'
-        data[new_col] = data[col].apply(lambda x: next((k for k, v in cr_method_type_map.items() if x in v), None))
-
 def get_cr_method_type_frequencies(data):
     cr_columns = ['cr_1_method_type', 'cr_2_method_type', 'cr_3_method_type', 'cr_4_method_type']
     cr_method_types = data[cr_columns].stack()
@@ -60,8 +46,7 @@ def get_cr_method_type_frequencies(data):
     return cr_freq
 
 
-#------------------------------------------------------------------------------------------------------------------------------
-
+#----- Main ------------------------------------------------------------------------------------------------------------------
 data = pd.read_csv('data/prelim_careless_data.csv')
 
 # List of variables by type to get frequencies for
@@ -76,8 +61,8 @@ for variable in variables:
     print(df)
     print()
 
-
+# get frequencies for cr_method and cr_method_type
+data = add_cr_method_type(data)
 get_cr_method_frequencies(data)
-
 get_cr_method_type_frequencies(data)
 
