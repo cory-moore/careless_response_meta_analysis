@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from scipy.stats import norm
 
+#TODO: fix pooled CIs, currently the range is incorrect
+
 #----- Functions ------------------------------------------------------------------------------------------------------------------
 def calculate_standard_errors(p, n):
     """Calculate standard errors for a given proportion and sample size."""
