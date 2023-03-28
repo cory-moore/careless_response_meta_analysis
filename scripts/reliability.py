@@ -4,22 +4,18 @@ import pingouin as pg
 
 #----- Functions ------------------------------------------------------------------------------------------------------------------
 def calculate_icc2k(data):
-        """
-        Calculate ICC2k for every column in data except ID and rater
-        icc['ICC'][4] == ICC2k
-        """
-        # compute ICC for every column in data except ID and rater
-        # icc["ICC"][4] == ICC2k
-        icc2k_results = pd.DataFrame(columns=['column', 'ICC2k'])
-        for column in data.columns:
-                if column not in ['ID', 'rater']:
-                        icc = pg.intraclass_corr(data=data, targets='ID', raters='rater', ratings=column)
-                        # concat results to icc2k_results and drop NaN values
-                        icc2k_results = pd.concat(
-                                [icc2k_results, pd.DataFrame({'column': [column], 'ICC2k': [icc["ICC"][4]]})]).dropna()
-        # get the mean of the ICC2k values
-        icc2k_mean = icc2k_results['ICC2k'].mean()
-        return icc2k_results, icc2k_mean
+    """
+    Calculate ICC2k for every column in data except ID and rater
+    icc['ICC'][4] == ICC2k
+    """
+    icc2k_results = pd.DataFrame(columns=['column', 'ICC2k'])
+    for column in data.columns:
+        if column not in ['ID', 'rater']:
+            icc = pg.intraclass_corr(data=data, targets='ID', raters='rater', ratings=column)
+            icc2k = pd.DataFrame({'column': [column], 'ICC2k': [icc["ICC"][4]]})
+            icc2k_results = pd.concat([icc2k_results, icc2k])
+    icc2k_mean = icc2k_results['ICC2k'].mean()
+    return icc2k_results, icc2k_mean
 
 
 #----- Main ------------------------------------------------------------------------------------------------------------------------
@@ -29,9 +25,9 @@ rater0_data['rater'] = 0
 rater1_data = pd.read_csv('data/rater1_code.csv')
 rater1_data['rater'] = 1
 
+# combine data from both raters and only keep rows with a duplicate value in ID column
+# duplicate values correspond to studies that were coded by both raters
 data = pd.concat([rater0_data, rater1_data], ignore_index=True)
-
-# only retain rows with a duplicate value in ID column
 data = (data[data
         .duplicated(subset='ID', keep=False)]
         .sort_values('ID')
