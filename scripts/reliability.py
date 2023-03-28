@@ -1,12 +1,25 @@
 
 import pandas as pd 
+import pingouin as pg
 
 #----- Functions ------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
+def calculate_icc2k(data):
+        """
+        Calculate ICC2k for every column in data except ID and rater
+        icc['ICC'][4] == ICC2k
+        """
+        # compute ICC for every column in data except ID and rater
+        # icc["ICC"][4] == ICC2k
+        icc2k_results = pd.DataFrame(columns=['column', 'ICC2k'])
+        for column in data.columns:
+                if column not in ['ID', 'rater']:
+                        icc = pg.intraclass_corr(data=data, targets='ID', raters='rater', ratings=column)
+                        # concat results to icc2k_results and drop NaN values
+                        icc2k_results = pd.concat(
+                                [icc2k_results, pd.DataFrame({'column': [column], 'ICC2k': [icc["ICC"][4]]})]).dropna()
+        # get the mean of the ICC2k values
+        icc2k_mean = icc2k_results['ICC2k'].mean()
+        return icc2k_results, icc2k_mean
 
 
 #----- Main ------------------------------------------------------------------------------------------------------------------------
@@ -22,6 +35,8 @@ data = pd.concat([rater0_data, rater1_data], ignore_index=True)
 data = (data[data
         .duplicated(subset='ID', keep=False)]
         .sort_values('ID')
-        .drop(columns=['title', 'year','authors', 'journal', 'doi', 'Notes','total_items'])
+        .drop(columns=['title', 'year','authors', 'journal', 'doi', 'Notes'])
         )
 
+# calculate ICC2k
+icc2k_results, icc2k_mean = calculate_icc2k(data)
