@@ -20,10 +20,7 @@ To pool the prevalence rates from all the studies using a random effects model i
 8. The standard error of the pooled effect size is calculated.
 9. The confidence interval for the pooled effect size is calculated.
 10. The confidence limits are back-transformed to obtain the confidence interval for the pooled proportion (prevalence).
-
-
-11. Assess heterogeneity: It is also important to assess heterogeneity in your meta-analysis, which refers to the variability in effect sizes across studies beyond what can be explained by chance. You can use statistical tests such as the Q-test or I-squared statistic to assess heterogeneity.
-12. Conduct sensitivity analyses: It is also recommended to conduct sensitivity analyses to examine the robustness of your results to different assumptions and variations in your analysis. For example, you can examine the influence of including or excluding certain studies, or using different statistical models.
+11. Assess heterogeneity using Cochran's Q and/or I-squared statistics.
 
 By following these steps, you can pool the prevalence rates from all the studies using a random effects model in your meta-analysis, while also assessing heterogeneity and conducting sensitivity analyses to ensure the robustness of your results.
 

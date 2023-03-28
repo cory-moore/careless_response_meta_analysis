@@ -2,19 +2,23 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2
-from scipy.stats import iqr
+import matplotlib.pyplot as plt
+from scripts.proportions_pooled import calculate_logit_transform
+from scripts.proportions_pooled import get_pooled_statistics
+from scripts.proportions_pooled import calculate_standard_errors
+from scripts.proportions_pooled import calculate_pooled_confidence_interval
 
 #----- Functions ------------------------------------------------------------------------------------------------------------------
-def calculate_cochran_q(p_values, n_values):
-    weights = [1 / (p * (1 - p) / n) for p, n in zip(p_values, n_values)]
-    sum_weights = sum(weights)
-    pooled_var = 1 / sum_weights
-    residuals = [(p - np.mean(p_values))**2 for p in p_values]
-    sum_resid = sum(residuals)
-    q_statistic = sum_resid / (pooled_var * (len(p_values) - 1))
-    df = len(p_values) - 1
-    p_value = 1 - chi2.cdf(q_statistic, df)
-    return q_statistic, df, p_value
+#TODO: confirm these formulas are correct
+
+def calculate_Q(p, w):
+    """Calculate the weighted Q statistic for a given list of values and weights."""
+    k = len(p)
+    p_w = np.average(x, weights=w)
+    Q = np.sum(w * np.square(p - p_w))
+    df = k - 1
+    p_value = 1 - chi2.cdf(Q, df)
+    return Q, df, p_value
 
 def calculate_i_squared(q_statistic, df, ci=0.95):
     alpha = 1 - ci
@@ -24,21 +28,30 @@ def calculate_i_squared(q_statistic, df, ci=0.95):
     i_squared_upper = (q_statistic - df * quantile / (q_statistic + quantile)) / q_statistic
     return i_squared, i_squared_lower, i_squared_upper
 
+def calculate_h_squared(q_statistic, k):
+    return q_statistic / (k - 1)
+
 #----- Main ------------------------------------------------------------------------------------------------------------------------
 data = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_total')
-p_values = data['proportions_total']
-n_values = data['sample_size']
+p = data['proportions_total']
+n = data['sample_size']
 
-# calculate Cochran's Q
-q_statistic, df, p_value = calculate_cochran_q(p_values, n_values)
-df = len(p_values) - 1
+# calculate the pooled statistics for the total careless response proportions
+pooled_p, pooled_se, lower_ci, upper_ci, n_sum = get_pooled_statistics(p, n)
+
+# calculate the logit-transformed proportions for the total studies
+logit_p_values = calculate_logit_transform(p)
+
+# calculate the weighted Q statistic for the total studies
+Q, df, p_value = calculate_Q(logit_p_values, n)
+print(f'Q statistic: {Q:.4f}')
+print(f'Degrees of freedom: {df}')
+print(f'P-value: {p_value:.4f}')
 
 # calculate I^2
-i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(q_statistic, df)
-
-# print results
-print('Cochrans Q test statistic: {:.2f}'.format(q_statistic))
-print('Cochrans Q Degrees of Freedom: {}'.format(df))
-print('Cochrans Q p-value: {:.4f}'.format(p_value))
+i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(Q, df)
 print('I-squared: {:.2%}'.format(i_squared))
 print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
+
+# calculate H^2
+h_squared = calculate_h_squared(Q, len(p))
