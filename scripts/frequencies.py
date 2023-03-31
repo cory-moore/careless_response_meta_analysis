@@ -75,8 +75,25 @@ for variable in variables:
     print(df)
     print()
 
+# create a dictionary of dataframes, with variable names as keys
+dfs = {}
+for variable in variables:
+    df = get_frequencies(data, variable)
+    dfs[variable] = df
+
 # get frequencies for cr_method and cr_method_type
-data = add_cr_method_type(data)
-get_cr_method_frequencies(data)
-get_cr_method_type_frequencies(data)
+cr_subset = add_cr_method_type(data)
+dfs['cr_method'] = get_cr_method_frequencies(cr_subset)
+dfs['cr_type'] = get_cr_method_type_frequencies(cr_subset)
+
+# print each dataframe in the dict
+for variable, df in dfs.items():
+    print(f"Frequencies for {variable}:")
+    print(df)
+    print()
+
+# # export to excel workbook
+with pd.ExcelWriter('frequencies.xlsx') as writer:
+    for variable, df in dfs.items():
+        df.to_excel(writer, sheet_name=variable)
 
