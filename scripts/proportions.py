@@ -115,9 +115,10 @@ def compute_cr_method_type_proportions(data, cr_method_type):
 data = pd.read_csv('data/prelim_careless_data.csv')
 data['journal_code'] = data['journal'].map(codebook['journal_code'])
 
+dfs = {}
+
 # compute total cr proportions
-cr_proportions_total = compute_proportions(data, 'cr_total_amount')
-cr_proportions_total = cr_proportions_total[['ID', 'sample_size', 'cr_total_amount', 'proportions_total']]
+dfs['proportions_total'] = compute_proportions(data, 'cr_total_amount')[['ID', 'sample_size', 'cr_total_amount', 'proportions_total']]
 
 # compute cr proportions by various groupings
 years = range(2000, 2023)
@@ -129,38 +130,30 @@ cr_method_codes = range(12)
 cr_method_types = ['response_time', 'outlier_analysis', 'bogus_items', 'consistency_indices', 'response_pattern', 'self_reported']
 
 years_df = [compute_proportions_by_year(data, year) for year in years]
-proportions_year = pd.concat(years_df)
+dfs['proportions_year'] = pd.concat(years_df)
 
 journal_dfs = [compute_proportions_by_journal(data, code) for code in jounal_codes]
-proportions_journal = pd.concat(journal_dfs)
+dfs['proportions_journal'] = pd.concat(journal_dfs)
 
 source_dfs = [compute_proportions_by_sample_source(data, code) for code in source_codes]
-proportions_sample_source = pd.concat(source_dfs)
+dfs['proportions_sample_source'] = pd.concat(source_dfs)
 
 method_dfs = [compute_proportions_by_sample_method(data, code) for code in method_codes]
-proportions_sample_method = pd.concat(method_dfs)
+dfs['proportions_sample_method'] = pd.concat(method_dfs)
 
 platform_dfs = [compute_proportions_by_sample_platform(data, code) for code in platform_codes]
-proportions_platform = pd.concat(platform_dfs)
+dfs['proportions_platform'] = pd.concat(platform_dfs)
 
 cr_methods_dfs = [compute_cr_method_proportions(data, code) for code in cr_method_codes]
-proportions_cr_method = pd.concat(cr_methods_dfs)
+dfs['proportions_cr_method'] = pd.concat(cr_methods_dfs)
 
 cr_type_dfs = [compute_cr_method_type_proportions(data, code) for code in cr_method_types]
-proportions_cr_type = pd.concat(cr_type_dfs)
+dfs['proportions_cr_type'] = pd.concat(cr_type_dfs)
 
 
 #----- Export ----------------------------------------------------------------------------------------------------------------------
-writer = pd.ExcelWriter('results/careless_response_proportions.xlsx')
-
-cr_proportions_total.to_excel(writer, 'proportions_total', index=False)
-proportions_year.to_excel(writer, 'proportions_year', index=False)
-proportions_journal.to_excel(writer, 'proportions_journal', index=False)
-proportions_sample_source.to_excel(writer, 'proportions_sample_source', index=False)
-proportions_sample_method.to_excel(writer, 'proportions_sample_method', index=False)
-proportions_platform.to_excel(writer, 'proportions_platform', index=False)
-proportions_cr_method.to_excel(writer, 'proportions_cr_method', index=False)
-proportions_cr_type.to_excel(writer, 'proportions_cr_type', index=False)
-
-writer.save()
+# # export to excel workbook
+with pd.ExcelWriter('results/raw_proportions.xlsx') as writer:
+    for name, df in dfs.items():
+        df.to_excel(writer, sheet_name=name, index=False)
 

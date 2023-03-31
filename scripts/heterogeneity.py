@@ -14,7 +14,7 @@ from scripts.proportions_pooled import calculate_pooled_confidence_interval
 def calculate_Q(p, w):
     """Calculate the weighted Q statistic for a given list of values and weights."""
     k = len(p)
-    p_w = np.average(x, weights=w)
+    p_w = np.average(p, weights=w)
     Q = np.sum(w * np.square(p - p_w))
     df = k - 1
     p_value = 1 - chi2.cdf(Q, df)
@@ -32,7 +32,7 @@ def calculate_h_squared(q_statistic, k):
     return q_statistic / (k - 1)
 
 #----- Main ------------------------------------------------------------------------------------------------------------------------
-data = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_total')
+data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
 p = data['proportions_total']
 n = data['sample_size']
 

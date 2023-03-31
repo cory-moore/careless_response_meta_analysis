@@ -68,13 +68,6 @@ variables = ['sample_source', 'sample_method', 'sample_platform', 'sample_level'
              'sample_incentive', 'sample_country', 'cr_multiple', 'cr_sequential',
              'design_time', 'design_method', 'design_location']
 
-# get frequencies for sample variables
-for variable in variables:
-    df = get_frequencies(data, variable)
-    print(f"Frequencies for variable {variable}:")
-    print(df)
-    print()
-
 # create a dictionary of dataframes, with variable names as keys
 dfs = {}
 for variable in variables:
@@ -93,7 +86,7 @@ for variable, df in dfs.items():
     print()
 
 # # export to excel workbook
-with pd.ExcelWriter('frequencies.xlsx') as writer:
+with pd.ExcelWriter('results/frequencies.xlsx') as writer:
     for variable, df in dfs.items():
-        df.to_excel(writer, sheet_name=variable)
+        df.to_excel(writer, sheet_name=variable, index=False)
 

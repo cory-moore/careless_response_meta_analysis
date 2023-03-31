@@ -66,7 +66,7 @@ def get_pooled_statistics(p, n):
 
 #----- Main ------------------------------------------------------------------------------------------------------------------------
 # # read in careless response proportions for total studies
-proportions_total = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_total')
+proportions_total = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
 p = proportions_total['proportions_total']
 n = proportions_total['sample_size']
 
@@ -81,7 +81,7 @@ total_row = ['Total', '', pooled_p, pooled_se, lower_ci, upper_ci, n_sum, len(pr
 pooled_results.loc[len(pooled_results)] = total_row
 
 # # read in careless response proportions by year
-proportions_year = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_year')
+proportions_year = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_year')
 
 # create a subset df for each year and calculate the pooled statistics
 for year in proportions_year['year'].unique():
@@ -93,7 +93,7 @@ for year in proportions_year['year'].unique():
     pooled_results.loc[len(pooled_results)] = year_row
 
 # # read in careless response proportions by journal
-proportions_journal = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_journal')
+proportions_journal = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_journal')
 # create a subset df for each journal and calculate the pooled statistics
 for journal in proportions_journal['journal_name'].unique():
     proportions_journal_subset = proportions_journal[proportions_journal['journal_name'] == journal]
@@ -104,7 +104,7 @@ for journal in proportions_journal['journal_name'].unique():
     pooled_results.loc[len(pooled_results)] = journal_row
 
 # # read in careless response proportions by sample source
-proportions_sample_source = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_sample_source')
+proportions_sample_source = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_sample_source')
 # create a subset df for each sample source and calculate the pooled statistics
 for source in proportions_sample_source['sample_source_name'].unique():
     proportions_source_subset = proportions_sample_source[proportions_sample_source['sample_source_name'] == source]
@@ -115,7 +115,7 @@ for source in proportions_sample_source['sample_source_name'].unique():
     pooled_results.loc[len(pooled_results)] = source_row
 
 # # read in careless response proportions by sample method
-proportions_sample_method = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_sample_method')
+proportions_sample_method = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_sample_method')
 # create a subset df for each sample method and calculate the pooled statistics
 for method in proportions_sample_method['sample_method_name'].unique():
     proportions_method_subset = proportions_sample_method[proportions_sample_method['sample_method_name'] == method]
@@ -126,7 +126,7 @@ for method in proportions_sample_method['sample_method_name'].unique():
     pooled_results.loc[len(pooled_results)] = method_row
 
 # # read in careless response proportions by sample platform
-proportions_sample_platform = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_platform')
+proportions_sample_platform = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_platform')
 # create a subset df for each sample platform and calculate the pooled statistics
 for platform in proportions_sample_platform['sample_platform_name'].unique():
     proportions_platform_subset = proportions_sample_platform[proportions_sample_platform['sample_platform_name'] == platform]
@@ -137,7 +137,7 @@ for platform in proportions_sample_platform['sample_platform_name'].unique():
     pooled_results.loc[len(pooled_results)] = platform_row
 
 # # read in careless response proportions by careless response method
-proportions_cr_method = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_cr_method')
+proportions_cr_method = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_cr_method')
 # create a subset df for each careless response method and calculate the pooled statistics
 for cr_method in proportions_cr_method['cr_method_name'].unique():
     proportions_cr_method_subset = proportions_cr_method[proportions_cr_method['cr_method_name'] == cr_method]
@@ -148,7 +148,7 @@ for cr_method in proportions_cr_method['cr_method_name'].unique():
     pooled_results.loc[len(pooled_results)] = cr_method_row
 
 # # read in careless response proportions by careless response type
-proportions_cr_type = pd.read_excel('results/careless_response_proportions.xlsx', sheet_name='proportions_cr_type')
+proportions_cr_type = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_cr_type')
 # create a subset df for each careless response type and calculate the pooled statistics
 for cr_type in proportions_cr_type['cr_method_type'].unique():
     proportions_cr_type_subset = proportions_cr_type[proportions_cr_type['cr_method_type'] == cr_type]
@@ -160,4 +160,4 @@ for cr_type in proportions_cr_type['cr_method_type'].unique():
 
 
 # # export the pooled results to a csv
-pooled_results.to_csv('results/pooled_results.csv', index=False)
+pooled_results.to_csv('results/pooled_proportions.csv', index=False)
