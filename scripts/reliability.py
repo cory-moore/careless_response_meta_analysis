@@ -2,6 +2,10 @@
 import pandas as pd 
 import pingouin as pg
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+
 #----- Functions ------------------------------------------------------------------------------------------------------------------
 def calculate_icc2k(data):
     """
