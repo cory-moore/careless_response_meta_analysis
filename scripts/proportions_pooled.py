@@ -1,9 +1,8 @@
+
 import math
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
-
-#TODO: fix pooled CIs, currently the range is incorrect
 
 #----- Functions ------------------------------------------------------------------------------------------------------------------
 def calculate_standard_errors(p, n):
@@ -28,7 +27,9 @@ def calculate_pooled_prevalence(logit_p, n):
 
 def back_transform(pooled_p):
     """Back transform a pooled prevalence to a proportion."""
-    return np.exp(pooled_p) / (1 + np.exp(pooled_p))
+    back_transformed_p = np.exp(pooled_p) / (1 + np.exp(pooled_p))
+    back_transformed_p = round(back_transformed_p, 4)
+    return back_transformed_p 
 
 def calculate_pooled_standard_error(p_values, n_values):
     """Calculate the pooled standard error for a given list of proportions and sample sizes."""
@@ -36,6 +37,7 @@ def calculate_pooled_standard_error(p_values, n_values):
     sum_weights = sum(weights)
     pooled_var = 1 / sum_weights
     se_pooled = math.sqrt(pooled_var)
+    se_pooled = round(se_pooled, 4)
     return se_pooled
 
 def calculate_pooled_confidence_interval(pooled_p, pooled_se, alpha=0.05):
@@ -50,19 +52,21 @@ def back_transform_confidence_interval(lower_bound, upper_bound):
     """Back transform a confidence interval to proportions."""
     lower_ci = np.exp(lower_bound) / (1 + np.exp(lower_bound))
     upper_ci = np.exp(upper_bound) / (1 + np.exp(upper_bound))
+    lower_ci = round(lower_ci, 4)
+    upper_ci = round(upper_ci, 4)
     return lower_ci, upper_ci
 
 def get_pooled_statistics(p, n):
     """Calculate the pooled prevalence and its confidence interval for a given list of proportions and sample sizes."""
     logit_p = calculate_logit_transform(p)
-    pooled_p = calculate_pooled_prevalence(logit_p, n)
-    pooled_p = back_transform(pooled_p)
+    pooled_p_logit = calculate_pooled_prevalence(logit_p, n)
+    pooled_p = back_transform(pooled_p_logit)
     pooled_se = calculate_pooled_standard_error(p, n)
-    lower_bound, upper_bound = calculate_pooled_confidence_interval(pooled_p, pooled_se)
+    lower_bound, upper_bound = calculate_pooled_confidence_interval(pooled_p_logit, pooled_se)  # Use logit transformed pooled_p
     lower_ci, upper_ci = back_transform_confidence_interval(lower_bound, upper_bound)
     n_sum = sum(n)
     return pooled_p, pooled_se, lower_ci, upper_ci, n_sum
-    
+
 
 #----- Main ------------------------------------------------------------------------------------------------------------------------
 # # read in careless response proportions for total studies
