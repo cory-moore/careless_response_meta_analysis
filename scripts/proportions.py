@@ -9,7 +9,7 @@ from scripts.frequencies import add_cr_method_type
 def compute_proportions(data, cr_total):
     """Compute proportion of CR total amount to sample size"""
     cr_proportion_total = data[cr_total] / data['sample_size']
-    data['proportions_total'] = cr_proportion_total
+    data['proportions_total'] = round(cr_proportion_total, 4)
     return data
 
 def compute_proportion_confidence_interval(p, n, alpha=0.05):
@@ -19,12 +19,14 @@ def compute_proportion_confidence_interval(p, n, alpha=0.05):
     z = stats.norm.ppf(1 - alpha / 2)
     ci_lower = p - z * np.sqrt(p * (1 - p) / n)
     ci_upper = p + z * np.sqrt(p * (1 - p) / n)
+    ci_lower = round(ci_lower, 4)
+    ci_upper = round(ci_upper, 4)
     return ci_lower, ci_upper
 
 def compute_proportions_by_year(data, year):
     """Compute proportion of CR for a given year"""
     subset_df = data[data['year'] == year].copy()
-    subset_df['proportions_year'] = subset_df['cr_total_amount'] / subset_df['sample_size']
+    subset_df['proportions_year'] = (subset_df['cr_total_amount'] / subset_df['sample_size']).round(4)
     subset_df['year'] = year
     subset_df = subset_df[['ID', 'year', 'sample_size', 'cr_total_amount', 'proportions_year']]
     return subset_df
@@ -32,7 +34,7 @@ def compute_proportions_by_year(data, year):
 def compute_proportions_by_journal(data, journal_code):
     """Compute proportion of CR for a given journal"""
     subset_df = data[data['journal_code'] == journal_code].copy()
-    subset_df['proportions_journal'] = subset_df['cr_total_amount'] / subset_df['sample_size']
+    subset_df['proportions_journal'] = (subset_df['cr_total_amount'] / subset_df['sample_size']).round(4)
     subset_df['journal_name'] = codebook['journal'][journal_code]
     subset_df = subset_df[['ID', 'journal_code', 'journal_name', 'sample_size', 'cr_total_amount', 'proportions_journal']]
     return subset_df
@@ -40,7 +42,7 @@ def compute_proportions_by_journal(data, journal_code):
 def compute_proportions_by_sample_source(data, source_code):
     """Compute proportion of CR for a given sample source"""
     subset_df = data[data['sample_source'] == source_code].copy()
-    subset_df['proportions_sample_source'] = subset_df['cr_total_amount'] / subset_df['sample_size']
+    subset_df['proportions_sample_source'] = (subset_df['cr_total_amount'] / subset_df['sample_size']).round(4)
     subset_df['sample_source_name'] = codebook['sample_source'][source_code]
     subset_df = subset_df[['ID', 'sample_source', 'sample_source_name', 'sample_size', 'cr_total_amount', 'proportions_sample_source']]
     return subset_df
@@ -48,7 +50,7 @@ def compute_proportions_by_sample_source(data, source_code):
 def compute_proportions_by_sample_method(data, method_code):
     """Compute proportion of CR for a given sample method"""
     subset_df = data[data['sample_method'] == method_code].copy()
-    subset_df['proportions_sample_method'] = subset_df['cr_total_amount'] / subset_df['sample_size']
+    subset_df['proportions_sample_method'] = (subset_df['cr_total_amount'] / subset_df['sample_size']).round(4)
     subset_df['sample_method_name'] = codebook['sample_method'][method_code]
     subset_df = subset_df[['ID', 'sample_method', 'sample_method_name', 'sample_size', 'cr_total_amount', 'proportions_sample_method']]
     return subset_df
@@ -56,7 +58,7 @@ def compute_proportions_by_sample_method(data, method_code):
 def compute_proportions_by_sample_platform(data, platform_code):
     """Compute proportion of CR for a given sample platform"""
     subset_df = data[data['sample_platform'] == platform_code].copy()
-    subset_df['proportions_platform'] = subset_df['cr_total_amount'] / subset_df['sample_size']
+    subset_df['proportions_platform'] = (subset_df['cr_total_amount'] / subset_df['sample_size']).round(4)
     subset_df['sample_platform_name'] = codebook['sample_platform'][platform_code]
     subset_df = subset_df[['ID', 'sample_platform', 'sample_platform_name', 'sample_size', 'cr_total_amount', 'proportions_platform']]
     return subset_df
@@ -84,7 +86,7 @@ def subset_data_by_cr_method(data, cr_method_code):
 def compute_cr_method_proportions(data, cr_method_code):
     """Compute proportion of CR for a given CR method"""
     subset_df = subset_data_by_cr_method(data, cr_method_code)
-    subset_df['proportions_cr_method'] = subset_df['cr_amount'] / subset_df['sample_size']
+    subset_df['proportions_cr_method'] = (subset_df['cr_amount'] / subset_df['sample_size']).apply(lambda x: round(x, 4))
     return subset_df
 
 def subset_data_by_cr_method_type(data, cr_method_type):
@@ -113,7 +115,7 @@ def subset_data_by_cr_method_type(data, cr_method_type):
 def compute_cr_method_type_proportions(data, cr_method_type):
     """Compute proportion of CR for a given CR method type"""
     subset_df = subset_data_by_cr_method_type(data, cr_method_type)
-    subset_df['proportions_cr_type'] = subset_df['cr_amount'] / subset_df['sample_size']
+    subset_df['proportions_cr_type'] = subset_df['cr_amount'] / subset_df['sample_size'].apply(lambda x: round(x, 4))
     return subset_df
 
 
