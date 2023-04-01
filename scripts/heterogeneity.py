@@ -12,7 +12,11 @@ from scripts.proportions_pooled import calculate_pooled_confidence_interval
 #TODO: confirm these formulas are correct
 
 def calculate_Q(p, w):
-    """Calculate the weighted Q statistic for a given list of values and weights."""
+    """
+    Calculate the weighted Q statistic for a given list of values and weights.
+    Q is a measure of the dispersion of effect sizes. 
+    It takes into account the individual study effect sizes (p) and their corresponding weights (w).
+    """
     k = len(p)
     p_w = np.average(p, weights=w)
     Q = np.sum(w * np.square(p - p_w))
@@ -21,6 +25,10 @@ def calculate_Q(p, w):
     return Q, df, p_value
 
 def calculate_i_squared(q_statistic, df, ci=0.95):
+    """
+    Calculate the I^2 statistic for a given Q statistic and degrees of freedom.
+    I^2 is a measure of the proportion of the total variation in effect sizes that is due to heterogeneity.
+    """
     alpha = 1 - ci
     quantile = chi2.ppf(1 - alpha, df)
     i_squared = (q_statistic - df) / q_statistic
@@ -29,7 +37,12 @@ def calculate_i_squared(q_statistic, df, ci=0.95):
     return i_squared, i_squared_lower, i_squared_upper
 
 def calculate_h_squared(q_statistic, k):
-    return q_statistic / (k - 1)
+    """
+    Calculate the H^2 statistic for a given Q statistic and number of studies.
+    H^2 is an estimate of the amount of true heterogeneity in the effect sizes relative to the total variation observed.    
+    """
+    h2 = q_statistic / (k - 1)
+    return h2
 
 #----- Main ------------------------------------------------------------------------------------------------------------------------
 data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
