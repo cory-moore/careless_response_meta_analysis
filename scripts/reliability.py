@@ -26,7 +26,7 @@ def calculate_icc2k(data):
 rater0_data = pd.read_csv('data/prelim_careless_data.csv')
 rater0_data['rater'] = 0
 
-rater1_data = pd.read_csv('data/rater1_code.csv')
+rater1_data = pd.read_csv('data/rater1_data.csv')
 rater1_data['rater'] = 1
 
 # combine data from both raters and only keep rows with a duplicate value in ID column
