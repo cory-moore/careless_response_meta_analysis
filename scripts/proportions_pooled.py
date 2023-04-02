@@ -5,9 +5,6 @@ import numpy as np
 from scipy.stats import norm
 
 #----- Functions ------------------------------------------------------------------------------------------------------------------
-def calculate_standard_errors(p, n):
-    """Calculate standard errors for a given proportion and sample size."""
-    return np.sqrt(p * (1 - p) / n)
 
 def calculate_logit_transform(p):
     """Calculate the logit transform for a given proportion."""
