@@ -1,7 +1,22 @@
-Harrer, M., Cuijpers, P., Furukawa, T. A., & Ebert, D. D. (2021). Doing Meta-Analysis with R: A Hands-On Guide (1st ed.)
-Barendregt, J. J., Doi, S. A., Lee, Y. Y., Norman, R. E., & Vos, T. (2013). Meta-analysis of prevalence.
 
-## **Proportions**
+# Reliability
+## ICC(2,k)
+The ICC(2,k) refers to a two-way random effects model with consistency agreement. In this model, both raters (judges) and subjects are considered random samples from larger populations. The "2" in ICC(2,k) indicates that it's a two-way random effects model, while the "k" signifies that there are k different raters or judges involved in the assessment. The ICC(2,k) is focused on the consistency of the ratings, meaning that the raters' scores should be proportional to each other, even if they don't necessarily have the same mean.
+
+ICC(2,k) = (MSR - MSE) / (MSR + (MSC - MSE) / n)
+
+$$\text{ICC}(2,k) = \frac{\text{MS}_{R} - \text{MS}_{E}}{\text{MS}_{R} + (\text{MS}_{C} - \text{MS}_{E}) / n}$$
+
+where:
+
+-   MSR is the mean square for rows (subjects)
+-   MSC is the mean square for columns (raters)
+-   MSE is the mean square for the residual (error) term
+-   k is the number of raters or judges
+-   n is the number of subjects
+
+
+# Proportions
 Proportion is given by the number of events divided by the total number of observations:
 $$ p = \frac{k}{n} $$
 where p is the proportion, k is the number of events, and n is the total number of observations (sample size).
@@ -11,6 +26,8 @@ The standard error of the proportion is given by:
 $$ SE(p) = \sqrt{\frac{p(1 - p)}{n}} $$
 
 # Pooling
+- Harrer, M., Cuijpers, P., Furukawa, T. A., & Ebert, D. D. (2021). Doing Meta-Analysis with R: A Hands-On Guide 
+- Barendregt, J. J., Doi, S. A., Lee, Y. Y., Norman, R. E., & Vos, T. (2013). Meta-analysis of prevalence.
 ## Transformations
 ### **Logit transformation**
 The logit transformation is given by:
@@ -57,11 +74,16 @@ where Zα/2 denotes the appropriate factor from the standard Normal distribution
   
 ## Hetereogeneity
 ### **Cochran's Q test**
-The Cochran's Q test is given by:
-$$ Q = \sum_{i=1}^k \frac{(p_i - P)^2}{Var(p_i)} $$
-or
-$$ Q = \sum_{i=1}^k w_i(\hat{\theta}_i - \hat{\theta})^2 $$
-where p is the prevalence proportion, and N the population size.
+The Cochran's Q test is given by (Hoaglin, D. C. (2016); Harrer et al., (2021)):
+$$Q = k \sum_{i=1}^n w_i(x_i - \bar{x}_w)^2$$
+
+
+where:
+-   $Q$: The weighted sum of squared differences between each individual study's effect size and the weighted mean effect size. This serves as a measure of the heterogeneity in the effect sizes across studies.
+-   $k$: The number of studies included in the meta-analysis.
+-   $w_i$: The weight assigned to each study based on its precision, which is usually calculated as the inverse of the variance of the effect size estimate for that study. A higher weight indicates a more precise estimate.
+-   $x_i$: The effect size estimate for the $i$-th study.
+-   $\bar{x}_w$: The weighted mean effect size, calculated as the sum of each study's effect size estimate multiplied by its weight, divided by the sum of all weights. This serves as a summary measure of the effect size across all studies, where studies with higher precision (i.e., lower variance) are given more weight in the calculation.
 
 ### **I-squared statistic**
 The I-squared statistic is given by:

@@ -1,5 +1,5 @@
 Group,Subgroup,Pooled Prevalence,Pooled Standard Error,Lower CI,Upper CI,Pooled Sample Size,Number of Studies
-Total,,0.2241,0.0015,0.2236,0.2246,19535,60
+Total,,0.227,0.0015,0.2264,0.2275,18892,58
 Year,2013,0.0726,0.011,0.0711,0.074,551,2
 Year,2014,0.3033,0.0172,0.2962,0.3104,717,2
 Year,2015,0.0576,0.0169,0.0558,0.0594,191,1
@@ -9,11 +9,11 @@ Year,2018,0.3863,0.0057,0.3837,0.389,2283,11
 Year,2019,0.2793,0.0127,0.2743,0.2844,593,2
 Year,2020,0.0953,0.0041,0.0946,0.096,3464,9
 Year,2021,0.0965,0.0037,0.0959,0.0971,3442,10
-Year,2022,0.0493,0.0028,0.049,0.0495,2699,9
+Year,2022,0.025,0.0029,0.0249,0.0252,2056,7
 Journal,Journal of Applied Psychology,0.1353,0.0021,0.1348,0.1358,9320,23
 Journal,Academy of Management Journal,0.1952,0.0274,0.1869,0.2038,210,1
 Journal,Organizational Behavior and Human Decision Processes,0.1461,0.0084,0.1441,0.1482,1186,5
-Journal,Journal of Organizational Behavior,0.105,0.006,0.1039,0.1061,1891,8
+Journal,Journal of Organizational Behavior,0.1021,0.0077,0.1007,0.1035,1248,6
 Journal,Journal of Occupational Health Psychology,0.0686,0.0045,0.068,0.0692,1825,5
 Journal,Journal of Vocational Behavior,0.0522,0.0192,0.0504,0.0541,134,1
 Journal,Journal of Business and Psychology,0.1923,0.0042,0.191,0.1936,1774,5
@@ -23,13 +23,13 @@ Journal,International Journal of Selection and Assessment,0.1608,0.0177,0.1562,0
 Journal,Human Performance,0.0747,0.015,0.0727,0.0768,308,1
 Journal,Human Relations,0.0318,0.0071,0.0314,0.0322,447,2
 Sample Source,student,0.1741,0.0051,0.1726,0.1755,2203,9
-Sample Source,employee,0.245,0.0018,0.2444,0.2457,12599,38
+Sample Source,employee,0.2501,0.0018,0.2494,0.2507,11956,36
 Sample Source,student-employee,0.0907,0.0056,0.0898,0.0917,1294,5
 Sample Source,mixture,0.188,0.0054,0.1864,0.1897,2097,4
-Sample Method,volunteer,0.22,0.0016,0.2194,0.2205,17466,54
+Sample Method,volunteer,0.2231,0.0017,0.2226,0.2237,16823,52
 Sample Method,snowball,0.0928,0.004,0.0921,0.0934,1446,4
 Sample Method,conveniance,0.3619,0.0332,0.347,0.3771,210,1
-Sample Platform,mturk,0.2763,0.0023,0.2754,0.2772,9110,25
+Sample Platform,mturk,0.2834,0.0023,0.2825,0.2843,8467,23
 Sample Platform,qualtrics,0.0414,0.0076,0.0408,0.042,519,2
 Sample Platform,prolific,0.0624,0.0039,0.0619,0.0628,2317,7
 Sample Platform,university platform,0.2562,0.0141,0.251,0.2615,557,2
