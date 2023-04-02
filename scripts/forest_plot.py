@@ -1,7 +1,7 @@
 
 import pandas as pd
-import numpy as np
 from scipy.stats import norm
+import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.rcParams.update({'text.usetex': True})
@@ -48,6 +48,13 @@ def create_forest_plot(data, pooled_p, lower_ci, upper_ci):
     plt.show()
     return fig
 
+def create_funnel_plot(p, se):
+    plt.figure(figsize=(12, 8))
+    sns.scatterplot(data=data, x=p, y=se)
+    plt.xlabel('Proportion of Careless Responding')
+    plt.ylabel('Standard Error')
+    plt.title('Funnel Plot')
+    plt.show()
 
 #----- Main ------------------------------------------------------------------------------------------------------------------------
 # prepare data
@@ -68,3 +75,6 @@ plot = create_forest_plot(data, pooled_p, lower_ci, upper_ci)
 # save plot
 plot.savefig('results/forest_plot.png', dpi=300, bbox_inches='tight')
 
+
+# Create the funnel plot
+create_funnel_plot(p, se)
