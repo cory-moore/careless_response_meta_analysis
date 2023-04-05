@@ -16,9 +16,9 @@ def calculate_sampling_variances(p, n):
 
 def calculate_pooled_prevalence(logit_p, n):
     """Calculate the pooled prevalence for a given logit transformed proportion and sample size."""
-    weights = [1 / (p * (1 - p) / n) for p, n in zip(logit_p, n)]
-    numerator = sum([p / (p * (1 - p) / n) for p, n in zip(logit_p, n)])
-    denominator = sum(weights)
+    weights = 1 / (logit_p * (1 - logit_p) / n)
+    numerator = (logit_p / (logit_p * (1 - logit_p) / n)).sum()
+    denominator = weights.sum()
     pooled_p = numerator / denominator
     return pooled_p
 
