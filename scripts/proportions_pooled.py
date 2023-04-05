@@ -14,6 +14,10 @@ def calculate_sampling_variances(p, n):
     """Calculate sampling variances for a given proportion and sample size."""
     return p * (1 - p) / n
 
+def calculate_logit_variance(p, n):
+    """Calculate the variance of the logit transformed proportion for a given proportion and sample size."""
+    return 1 / (n * p) + 1 / (n * (1 - p))
+
 def calculate_pooled_prevalence(logit_p, n):
     """Calculate the pooled prevalence for a given logit transformed proportion and sample size."""
     weights = 1 / (logit_p * (1 - logit_p) / n)
