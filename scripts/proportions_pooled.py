@@ -7,34 +7,44 @@ from scipy.stats import norm
 #----- Functions ------------------------------------------------------------------------------------------------------------------
 
 def calculate_logit_transform(p):
-    """Calculate the logit transform for a given proportion."""
+    """ Takes a proportion p as input and calculates the logit transformation of the proportion."""
     return np.log(p / (1 - p))
 
-def calculate_sampling_variances(p, n):
-    """Calculate sampling variances for a given proportion and sample size."""
-    return p * (1 - p) / n
-
 def calculate_logit_variance(p, n):
-    """Calculate the variance of the logit transformed proportion for a given proportion and sample size."""
+    """ 
+    Takes a raw proportion p and a sample size n as input and calculates the variance of the logit transformed proportion. 
+    The formula is derived from the properties of the logit transformation. 
+    The logit variance formula calculates the variance of the logit-transformed proportion without needing to input the logit-transformed proportions directly.
+    """
     return 1 / (n * p) + 1 / (n * (1 - p))
 
 def calculate_pooled_prevalence(logit_p, n):
-    """Calculate the pooled prevalence for a given logit transformed proportion and sample size."""
+    """ Takes a logit transformed proportion logit_p and a sample size n as input and calculates the pooled prevalence """
     weights = 1 / (logit_p * (1 - logit_p) / n)
     numerator = (logit_p / (logit_p * (1 - logit_p) / n)).sum()
     denominator = weights.sum()
     pooled_p = numerator / denominator
     return pooled_p
 
+# def calculate_pooled_prevalence(logit_p, n, p):
+#     #NOTE: I believe this is the correct approach
+#     """ Takes a logit transformed proportion logit_p, a sample size n, and a proportion p as input and calculates the pooled prevalence """
+#     weights = 1 / calculate_logit_variance(p, n) # inverse variance method
+#     numerator = (logit_p * weights).sum()
+#     denominator = weights.sum()
+#     pooled_p = numerator / denominator
+#     return pooled_p
+
 def back_transform(pooled_p):
-    """Back transform a pooled prevalence to a proportion."""
+    """ Takes a pooled prevalence pooled_p as input and back transforms it to a proportion """
     back_transformed_p = np.exp(pooled_p) / (1 + np.exp(pooled_p))
     back_transformed_p = round(back_transformed_p, 4)
     return back_transformed_p 
 
 def calculate_pooled_standard_error(p_values, n_values):
-    """Calculate the pooled standard error for a given list of proportions and sample sizes."""
-    weights = [1 / (p * (1 - p) / n) for p, n in zip(p_values, n_values)]
+    #NOTE: I believe this is the correct approach
+    """ Takes a list of proportions p_values and a list of sample sizes n_values and calculates the pooled standard error """
+    weights = [1 / calculate_logit_variance(p, n) for p, n in zip(p_values, n_values)]
     sum_weights = sum(weights)
     pooled_var = 1 / sum_weights
     se_pooled = math.sqrt(pooled_var)
@@ -42,7 +52,7 @@ def calculate_pooled_standard_error(p_values, n_values):
     return se_pooled
 
 def calculate_pooled_confidence_interval(pooled_p, pooled_se, alpha=0.05):
-    """Calculate the pooled confidence interval for a given pooled prevalence and standard error."""
+    """ Takes a pooled prevalence pooled_p, a pooled standard error pooled_se, and an optional alpha value and calculates the pooled confidence interval """
     z_crit = norm.ppf(1 - alpha / 2)
     me = z_crit * pooled_se
     lower_bound = pooled_p - me
@@ -50,7 +60,7 @@ def calculate_pooled_confidence_interval(pooled_p, pooled_se, alpha=0.05):
     return lower_bound, upper_bound
 
 def back_transform_confidence_interval(lower_bound, upper_bound):
-    """Back transform a confidence interval to proportions."""
+    """ Takes the lower and upper bounds of a confidence interval as input and back transforms them to proportions """
     lower_ci = np.exp(lower_bound) / (1 + np.exp(lower_bound))
     upper_ci = np.exp(upper_bound) / (1 + np.exp(upper_bound))
     lower_ci = round(lower_ci, 4)
@@ -58,9 +68,9 @@ def back_transform_confidence_interval(lower_bound, upper_bound):
     return lower_ci, upper_ci
 
 def get_pooled_statistics(p, n):
-    """Calculate the pooled prevalence and its confidence interval for a given list of proportions and sample sizes."""
+    """ Takes a list of proportions p and a list of sample sizes n and calculates the pooled prevalence and its confidence interval. """
     logit_p = calculate_logit_transform(p)
-    pooled_p_logit = calculate_pooled_prevalence(logit_p, n)
+    pooled_p_logit = calculate_pooled_prevalence(logit_p, n) #NOTE: have to adjust this according to correct pooled functions above
     pooled_p = back_transform(pooled_p_logit)
     pooled_se = calculate_pooled_standard_error(p, n)
     lower_bound, upper_bound = calculate_pooled_confidence_interval(pooled_p_logit, pooled_se)  # Use logit transformed pooled_p
