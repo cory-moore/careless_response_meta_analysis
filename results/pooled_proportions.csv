@@ -1,51 +1,51 @@
 Group,Subgroup,Pooled Prevalence,Pooled Standard Error,Lower CI,Upper CI,Pooled Sample Size,Number of Studies
-Total,,0.227,0.025,0.2185,0.2357,18892,58
-Year,2013,0.0726,0.1642,0.0537,0.0974,551,2
-Year,2014,0.3033,0.0813,0.2707,0.3379,717,2
+Total,,0.1437,0.025,0.1377,0.1498,18892,58
+Year,2013,0.0726,0.1642,0.0537,0.0975,551,2
+Year,2014,0.3028,0.0813,0.2702,0.3374,717,2
 Year,2015,0.0576,0.3106,0.0322,0.101,191,1
-Year,2016,0.113,0.057,0.1022,0.1246,4037,8
-Year,2017,0.0553,0.111,0.0449,0.0678,1558,6
-Year,2018,0.3863,0.0545,0.3613,0.4119,2283,11
-Year,2019,0.2793,0.1027,0.2407,0.3216,593,2
-Year,2020,0.0953,0.0603,0.0856,0.106,3464,9
-Year,2021,0.0965,0.0619,0.0864,0.1076,3442,10
-Year,2022,0.025,0.1426,0.019,0.0328,2056,7
-Journal,Journal of Applied Psychology,0.1353,0.0373,0.127,0.1441,9320,23
+Year,2016,0.1195,0.057,0.1082,0.1317,4037,8
+Year,2017,0.0554,0.111,0.045,0.0679,1558,6
+Year,2018,0.2798,0.0545,0.2588,0.3018,2283,11
+Year,2019,0.2661,0.1027,0.2287,0.3072,593,2
+Year,2020,0.0979,0.0603,0.0879,0.1088,3464,9
+Year,2021,0.1002,0.0619,0.0898,0.1117,3442,10
+Year,2022,0.0298,0.1426,0.0227,0.039,2056,7
+Journal,Journal of Applied Psychology,0.1263,0.0373,0.1185,0.1346,9320,23
 Journal,Academy of Management Journal,0.1952,0.1741,0.1471,0.2544,210,1
-Journal,Organizational Behavior and Human Decision Processes,0.1461,0.0905,0.1253,0.1697,1186,5
-Journal,Journal of Organizational Behavior,0.1021,0.0995,0.0856,0.1214,1248,6
-Journal,Journal of Occupational Health Psychology,0.0686,0.0955,0.0576,0.0816,1825,5
+Journal,Organizational Behavior and Human Decision Processes,0.1373,0.0905,0.1177,0.1597,1186,5
+Journal,Journal of Organizational Behavior,0.0987,0.0995,0.0826,0.1174,1248,6
+Journal,Journal of Occupational Health Psychology,0.0737,0.0955,0.0619,0.0875,1825,5
 Journal,Journal of Vocational Behavior,0.0522,0.3884,0.0251,0.1055,134,1
-Journal,Journal of Business and Psychology,0.1923,0.0846,0.1678,0.2193,1774,5
-Journal,Journal of Occupational and Organizational Psychology,0.4204,0.066,0.3892,0.4522,992,5
-Journal,Journal of Applied Social Psychology,0.0541,0.1387,0.0417,0.0698,1019,3
+Journal,Journal of Business and Psychology,0.1644,0.0846,0.1429,0.1885,1774,5
+Journal,Journal of Occupational and Organizational Psychology,0.3778,0.066,0.348,0.4087,992,5
+Journal,Journal of Applied Social Psychology,0.0543,0.1387,0.0419,0.07,1019,3
 Journal,International Journal of Selection and Assessment,0.1608,0.1314,0.129,0.1987,429,1
 Journal,Human Performance,0.0747,0.2167,0.0501,0.1099,308,1
-Journal,Human Relations,0.0318,0.2728,0.0189,0.0531,447,2
-Sample Source,student,0.1741,0.0678,0.1558,0.194,2203,9
-Sample Source,employee,0.2501,0.0329,0.2382,0.2624,11956,36
-Sample Source,student-employee,0.0907,0.1081,0.0747,0.1098,1294,5
-Sample Source,mixture,0.188,0.0661,0.169,0.2086,2097,4
-Sample Method,volunteer,0.2231,0.0268,0.2142,0.2324,16823,52
-Sample Method,snowball,0.0928,0.1179,0.0751,0.1141,1446,4
+Journal,Human Relations,0.0362,0.2728,0.0215,0.0603,447,2
+Sample Source,student,0.1538,0.0678,0.1373,0.1719,2203,9
+Sample Source,employee,0.1368,0.0329,0.1294,0.1446,11956,36
+Sample Source,student-employee,0.0944,0.1081,0.0778,0.1141,1294,5
+Sample Source,mixture,0.1622,0.0661,0.1454,0.1806,2097,4
+Sample Method,volunteer,0.1341,0.0268,0.1282,0.1404,16823,52
+Sample Method,snowball,0.0989,0.1179,0.0801,0.1215,1446,4
 Sample Method,conveniance,0.3619,0.1436,0.2997,0.4291,210,1
-Sample Platform,mturk,0.2834,0.0364,0.2691,0.2981,8467,23
-Sample Platform,qualtrics,0.0414,0.2238,0.0271,0.0627,519,2
-Sample Platform,prolific,0.0624,0.0888,0.0529,0.0734,2317,7
-Sample Platform,university platform,0.2562,0.1095,0.2175,0.2992,557,2
+Sample Platform,mturk,0.1596,0.0364,0.1503,0.1694,8467,23
+Sample Platform,qualtrics,0.0452,0.2238,0.0297,0.0684,519,2
+Sample Platform,prolific,0.0679,0.0888,0.0577,0.0798,2317,7
+Sample Platform,university platform,0.2347,0.1095,0.1983,0.2754,557,2
 Sample Platform,mixture,0.3027,0.1071,0.2603,0.3487,413,1
-Sample Platform,other,0.1046,0.1213,0.0843,0.129,901,4
-Careless Response Method,attention check items / bogus items / instructed response,0.2689,0.0351,0.2555,0.2826,10561,38
-Careless Response Method,completion pace / response time,0.1526,0.0787,0.1337,0.1736,1797,6
-Careless Response Method,max longstring,0.0171,0.1883,0.0119,0.0246,1652,5
-Careless Response Method,mahalanobis D,0.0323,0.1442,0.0245,0.0424,1563,5
+Sample Platform,other,0.1033,0.1213,0.0833,0.1275,901,4
+Careless Response Method,attention check items / bogus items / instructed response,0.1423,0.0351,0.1341,0.1509,10561,38
+Careless Response Method,completion pace / response time,0.1474,0.0787,0.129,0.1678,1797,6
+Careless Response Method,max longstring,0.0238,0.1883,0.0166,0.0341,1652,5
+Careless Response Method,mahalanobis D,0.037,0.1442,0.0281,0.0485,1563,5
 Careless Response Method,univariate outlier,0.0141,0.5042,0.0053,0.037,283,1
 Careless Response Method,SRSI use me,0.0183,0.5042,0.0069,0.0477,219,1
-Careless Response Method,consistency,0.0251,0.2709,0.0149,0.042,557,2
+Careless Response Method,consistency,0.0252,0.2709,0.015,0.0421,557,2
 Careless Response Method,PsySyn,0.0195,0.3365,0.0102,0.037,462,1
-Careless Response Type,response_time,0.1526,0.0787,0.1337,0.1736,1797,6
-Careless Response Type,outlier_analysis,0.0295,0.1387,0.0226,0.0383,1846,6
-Careless Response Type,bogus_items,0.2689,0.0351,0.2556,0.2827,10561,38
-Careless Response Type,consistency_indices,0.0226,0.211,0.015,0.0337,1019,3
-Careless Response Type,response_pattern,0.0171,0.1883,0.0119,0.0245,1652,5
+Careless Response Type,response_time,0.1474,0.0787,0.129,0.1678,1797,6
+Careless Response Type,outlier_analysis,0.0344,0.1387,0.0264,0.0447,1846,6
+Careless Response Type,bogus_items,0.1423,0.0351,0.1341,0.1509,10561,38
+Careless Response Type,consistency_indices,0.0228,0.211,0.0152,0.0341,1019,3
+Careless Response Type,response_pattern,0.0239,0.1883,0.0166,0.0341,1652,5
 Careless Response Type,self_reported,0.0183,0.5046,0.0069,0.0476,219,1

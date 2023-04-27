@@ -18,22 +18,13 @@ def calculate_logit_variance(p, n):
     """
     return 1 / (n * p) + 1 / (n * (1 - p))
 
-def calculate_pooled_prevalence(logit_p, n):
-    """ Takes a logit transformed proportion logit_p and a sample size n as input and calculates the pooled prevalence """
-    weights = 1 / (logit_p * (1 - logit_p) / n)
-    numerator = (logit_p / (logit_p * (1 - logit_p) / n)).sum()
+def calculate_pooled_prevalence(logit_p, n, p):
+    """ Takes a logit transformed proportion logit_p, a sample size n, and a proportion p as input and calculates the pooled prevalence """
+    weights = 1 / calculate_logit_variance(p, n) # inverse variance method
+    numerator = (logit_p * weights).sum()
     denominator = weights.sum()
     pooled_p = numerator / denominator
     return pooled_p
-
-# def calculate_pooled_prevalence(logit_p, n, p):
-#     #NOTE: I believe this is the correct approach
-#     """ Takes a logit transformed proportion logit_p, a sample size n, and a proportion p as input and calculates the pooled prevalence """
-#     weights = 1 / calculate_logit_variance(p, n) # inverse variance method
-#     numerator = (logit_p * weights).sum()
-#     denominator = weights.sum()
-#     pooled_p = numerator / denominator
-#     return pooled_p
 
 def back_transform(pooled_p):
     """ Takes a pooled prevalence pooled_p as input and back transforms it to a proportion """
@@ -70,7 +61,7 @@ def back_transform_confidence_interval(lower_bound, upper_bound):
 def get_pooled_statistics(p, n):
     """ Takes a list of proportions p and a list of sample sizes n and calculates the pooled prevalence and its confidence interval. """
     logit_p = calculate_logit_transform(p)
-    pooled_p_logit = calculate_pooled_prevalence(logit_p, n) #NOTE: have to adjust this according to correct pooled functions above
+    pooled_p_logit = calculate_pooled_prevalence(logit_p, n, p) #NOTE: have to adjust this according to correct pooled functions above
     pooled_p = back_transform(pooled_p_logit)
     pooled_se = calculate_pooled_standard_error(p, n)
     lower_bound, upper_bound = calculate_pooled_confidence_interval(pooled_p_logit, pooled_se)  # Use logit transformed pooled_p
