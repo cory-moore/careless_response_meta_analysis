@@ -22,21 +22,23 @@ def calculate_icc2k(data):
     return icc2k_results, icc2k_mean
 
 
-#----- Main ------------------------------------------------------------------------------------------------------------------------
-rater0_data = pd.read_csv('data/prelim_careless_data.csv')
-rater0_data['rater'] = 0
+def main():
+    rater0_data = pd.read_csv('data/prelim_careless_data.csv')
+    rater0_data['rater'] = 0
 
-rater1_data = pd.read_csv('data/rater1_data.csv')
-rater1_data['rater'] = 1
+    rater1_data = pd.read_csv('data/rater1_data.csv')
+    rater1_data['rater'] = 1
 
-# combine data from both raters and only keep rows with a duplicate value in ID column
-# duplicate values correspond to studies that were coded by both raters
-data = pd.concat([rater0_data, rater1_data], ignore_index=True)
-data = (data[data
-        .duplicated(subset='ID', keep=False)]
-        .sort_values('ID')
-        .drop(columns=['title', 'year','authors', 'journal', 'doi', 'Notes'])
-        )
+    # combine data from both raters and only keep rows with a duplicate value in ID column
+    # duplicate values correspond to studies that were coded by both raters
+    data = pd.concat([rater0_data, rater1_data], ignore_index=True)
+    data = (data[data
+            .duplicated(subset='ID', keep=False)]
+            .sort_values('ID')
+            .drop(columns=['title', 'year','authors', 'journal', 'doi', 'Notes'])
+            )
 
-# calculate ICC2k
-icc2k_results, icc2k_mean = calculate_icc2k(data)
+    # calculate ICC2k
+    icc2k_results, icc2k_mean = calculate_icc2k(data)
+if __name__ == "__main__":
+    main()

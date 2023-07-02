@@ -61,19 +61,31 @@ codebook = {
         25: 'Dissertations'
     },
     'sample_source': {
+        -1: 'unspecified',
         0: 'student',
         1: 'employee',
         2: 'student-employee',
         3: 'mixture'
     },
+    'sample_recruitment': {
+        -1: 'unspecified',
+        0: 'university platform',
+        1: 'crowdsource platform',
+        2: 'workplace',
+        3: 'social media',
+        4: 'listserv',
+        5: 'mixture',
+        6: 'other'
+    },
     'sample_method': {
+        -1: 'unspecified',
         0: 'random',
         1: 'volunteer',
         2: 'snowball',
         3: 'conveniance'
     },
     'sample_platform': {
-        -1: 'unspecified/NA/ambiguous',
+        -1: 'unspecified',
         0: 'mturk',
         1: 'qualtrics',
         2: 'prolific',

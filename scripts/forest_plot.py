@@ -53,30 +53,32 @@ def create_funnel_plot(p, se):
     plt.title('Funnel Plot')
     plt.show()
 
+def main():
+    #----- Forest plot ------------------------------------------------------------------------------------------------------------------------
+    # prepare data
+    data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
+    p = data['proportions_total']
+    n = data['sample_size']
 
-#----- Forest plot ------------------------------------------------------------------------------------------------------------------------
-# prepare data
-data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
-p = data['proportions_total']
-n = data['sample_size']
+    data['weight'] = calculate_sampling_variances(p, n) #NOTE: need to figure out whether to place this in the denominator like so: 1 / calculate_sampling_variances(p, n)
+    data['normalized_weight'] = normalize_weights(data['weight'])
 
-data['weight'] = calculate_sampling_variances(p, n) #NOTE: need to figure out whether to place this in the denominator like so: 1 / calculate_sampling_variances(p, n)
-data['normalized_weight'] = normalize_weights(data['weight'])
+    # get pooled statistics
+    pooled_p, _, lower_ci, upper_ci, _ = get_pooled_statistics(p, n)
 
-# get pooled statistics
-pooled_p, _, lower_ci, upper_ci, _ = get_pooled_statistics(p, n)
+    # create forest plot
+    plot = create_forest_plot(data, pooled_p, lower_ci, upper_ci)
 
-# create forest plot
-plot = create_forest_plot(data, pooled_p, lower_ci, upper_ci)
-
-# save plot
-#plot.savefig('results/forest_plot_left.png', dpi=300, bbox_inches='tight')
+    # save plot
+    #plot.savefig('results/forest_plot_left.png', dpi=300, bbox_inches='tight')
 
 
-#------ Funnel plot -------------------------------------------------------------------------
-# prepare data
-# se = data['se']
-# var = se**2
+    #------ Funnel plot -------------------------------------------------------------------------
+    # prepare data
+    # se = data['se']
+    # var = se**2
 
-# Create the funnel plot
-#create_funnel_plot(p, se)
+    # Create the funnel plot
+    #create_funnel_plot(p, se)
+if __name__ == '__main__':
+    main()

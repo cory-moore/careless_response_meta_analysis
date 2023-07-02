@@ -9,7 +9,6 @@ from scripts.proportions_pooled import calculate_standard_errors
 from scripts.proportions_pooled import calculate_pooled_confidence_interval
 
 #----- Functions ------------------------------------------------------------------------------------------------------------------
-
 def calculate_Q(p, w):
     """
     Calculate the weighted Q statistic for a given list of values and weights.
@@ -43,74 +42,75 @@ def calculate_h_squared(q_statistic, k):
     h2 = q_statistic / (k - 1)
     return h2
 
-#----- Main ------------------------------------------------------------------------------------------------------------------------
-data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
-p = data['proportions_total']
-n = data['sample_size']
+def main():
+    data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
+    p = data['proportions_total']
+    n = data['sample_size']
 
-# calculate the pooled statistics for the total careless response proportions
-pooled_p, pooled_se, lower_ci, upper_ci, n_sum = get_pooled_statistics(p, n)
+    # calculate the pooled statistics for the total careless response proportions
+    pooled_p, pooled_se, lower_ci, upper_ci, n_sum = get_pooled_statistics(p, n)
 
-# calculate the logit-transformed proportions for the total studies
-logit_p_values = calculate_logit_transform(p)
+    # calculate the logit-transformed proportions for the total studies
+    logit_p_values = calculate_logit_transform(p)
 
-# calculate the weighted Q statistic for the total studies
-Q, df, p_value = calculate_Q(logit_p_values, n)
-print(f'Q statistic: {Q:.4f}')
-print(f'Degrees of freedom: {df}')
-print(f'P-value: {p_value:.4f}')
+    # calculate the weighted Q statistic for the total studies
+    Q, df, p_value = calculate_Q(logit_p_values, n)
+    print(f'Q statistic: {Q:.4f}')
+    print(f'Degrees of freedom: {df}')
+    print(f'P-value: {p_value:.4f}')
 
-# calculate I^2
-i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(Q, df)
-print('I-squared: {:.2%}'.format(i_squared))
-print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
+    # calculate I^2
+    i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(Q, df)
+    print('I-squared: {:.2%}'.format(i_squared))
+    print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
 
-# calculate H^2
-h_squared = calculate_h_squared(Q, len(p))
+    # calculate H^2
+    h_squared = calculate_h_squared(Q, len(p))
 
-# -------------------------------------------
-employees = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_sample_source')
-employees = employees[employees['sample_source_name'] == 'employee']
-p = employees['proportions_sample_source']
-n = employees['sample_size']
+    # -------------------------------------------
+    employees = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_sample_source')
+    employees = employees[employees['sample_source_name'] == 'employee']
+    p = employees['proportions_sample_source']
+    n = employees['sample_size']
 
-# calculate the pooled statistics for the employee careless response proportions
-pooled_p, pooled_se, lower_ci, upper_ci, n_sum = get_pooled_statistics(p, n)
+    # calculate the pooled statistics for the employee careless response proportions
+    pooled_p, pooled_se, lower_ci, upper_ci, n_sum = get_pooled_statistics(p, n)
 
-# calculate the logit-transformed proportions for the employee studies
-logit_p_values = calculate_logit_transform(p)
+    # calculate the logit-transformed proportions for the employee studies
+    logit_p_values = calculate_logit_transform(p)
 
-# calculate the weighted Q statistic for the employee studies
-Q, df, p_value = calculate_Q(logit_p_values, n)
-print(f'Q statistic: {Q:.4f}')
-print(f'Degrees of freedom: {df}')
-print(f'P-value: {p_value:.4f}')
+    # calculate the weighted Q statistic for the employee studies
+    Q, df, p_value = calculate_Q(logit_p_values, n)
+    print(f'Q statistic: {Q:.4f}')
+    print(f'Degrees of freedom: {df}')
+    print(f'P-value: {p_value:.4f}')
 
-# calculate I^2
-i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(Q, df)
-print('I-squared: {:.2%}'.format(i_squared))
-print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
+    # calculate I^2
+    i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(Q, df)
+    print('I-squared: {:.2%}'.format(i_squared))
+    print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
 
-#--------------------------------------------
-cr_type = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_cr_type')
-cr_type = cr_type[cr_type['cr_method_type'] == 'bogus_items']
-p = cr_type['proportions_cr_type']
-n = cr_type['sample_size']
+    #--------------------------------------------
+    cr_type = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_cr_type')
+    cr_type = cr_type[cr_type['cr_method_type'] == 'bogus_items']
+    p = cr_type['proportions_cr_type']
+    n = cr_type['sample_size']
 
-# calculate the pooled statistics for the bogus items careless response proportions
-pooled_p, pooled_se, lower_ci, upper_ci, n_sum = get_pooled_statistics(p, n)
+    # calculate the pooled statistics for the bogus items careless response proportions
+    pooled_p, pooled_se, lower_ci, upper_ci, n_sum = get_pooled_statistics(p, n)
 
-# calculate the logit-transformed proportions for the bogus items studies
-logit_p_values = calculate_logit_transform(p)
+    # calculate the logit-transformed proportions for the bogus items studies
+    logit_p_values = calculate_logit_transform(p)
 
-# calculate the weighted Q statistic for the bogus items studies
-Q, df, p_value = calculate_Q(logit_p_values, n)
-print(f'Q statistic: {Q:.4f}')
-print(f'Degrees of freedom: {df}')
-print(f'P-value: {p_value:.4f}')
+    # calculate the weighted Q statistic for the bogus items studies
+    Q, df, p_value = calculate_Q(logit_p_values, n)
+    print(f'Q statistic: {Q:.4f}')
+    print(f'Degrees of freedom: {df}')
+    print(f'P-value: {p_value:.4f}')
 
-# calculate I^2
-i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(Q, df)
-print('I-squared: {:.2%}'.format(i_squared))
-print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
-
+    # calculate I^2
+    i_squared, i_squared_lower, i_squared_upper = calculate_i_squared(Q, df)
+    print('I-squared: {:.2%}'.format(i_squared))
+    print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
+if __name__ == '__main__':
+    main()

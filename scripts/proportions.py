@@ -122,101 +122,102 @@ def compute_cr_method_type_proportions(data, cr_method_type):
     subset_df['proportions_cr_type'] = subset_df['cr_amount'] / subset_df['sample_size'].apply(lambda x: round(x, 4))
     return subset_df
 
+def main():
+    data = pd.read_csv('data/prelim_careless_data.csv')
+    data['journal_code'] = data['journal'].map(codebook['journal_code'])
+    data['sample_platform']
+    dfs = {}
 
-#----- Main ------------------------------------------------------------------------------------------------------------------------
-data = pd.read_csv('data/prelim_careless_data.csv')
-data['journal_code'] = data['journal'].map(codebook['journal_code'])
-data['sample_platform']
-dfs = {}
+    # Compute total cr proportions
+    proportions_total_df = compute_proportions(data, 'cr_total_amount')[['ID', 'sample_size', 'cr_total_amount', 'proportions_total']].copy()
+    proportions_total_df['se'] = proportions_total_df.apply(lambda row: compute_standard_errors(row['proportions_total'], row['sample_size']), axis=1)
+    proportions_total_df['ci_lower'], proportions_total_df['ci_upper'] = zip(*proportions_total_df.apply(lambda row: compute_confidence_interval(row['proportions_total'], row['sample_size']), axis=1))
+    dfs['proportions_total'] = proportions_total_df
 
-# Compute total cr proportions
-proportions_total_df = compute_proportions(data, 'cr_total_amount')[['ID', 'sample_size', 'cr_total_amount', 'proportions_total']].copy()
-proportions_total_df['se'] = proportions_total_df.apply(lambda row: compute_standard_errors(row['proportions_total'], row['sample_size']), axis=1)
-proportions_total_df['ci_lower'], proportions_total_df['ci_upper'] = zip(*proportions_total_df.apply(lambda row: compute_confidence_interval(row['proportions_total'], row['sample_size']), axis=1))
-dfs['proportions_total'] = proportions_total_df
+    # compute cr proportions by various groupings
+    years = range(2000, 2023)
+    jounal_codes = range(24)
+    source_codes = range(4)
+    method_codes = range(4)
+    platform_codes = range(6)
+    cr_method_codes = range(12)
+    cr_method_types = ['response_time', 'outlier_analysis', 'bogus_items', 'consistency_indices', 'response_pattern', 'self_reported']
 
-# compute cr proportions by various groupings
-years = range(2000, 2023)
-jounal_codes = range(24)
-source_codes = range(4)
-method_codes = range(4)
-platform_codes = range(6)
-cr_method_codes = range(12)
-cr_method_types = ['response_time', 'outlier_analysis', 'bogus_items', 'consistency_indices', 'response_pattern', 'self_reported']
+    # Compute proportions by year
+    years_df = []
+    for year in years:
+        df = compute_proportions_by_year(data, year).copy()
+        df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_year'], row['sample_size']), axis=1)
+        df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_year'], row['sample_size'])[0], axis=1)
+        df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_year'], row['sample_size'])[1], axis=1)
+        years_df.append(df)
+    dfs['proportions_year'] = pd.concat(years_df)
 
-# Compute proportions by year
-years_df = []
-for year in years:
-    df = compute_proportions_by_year(data, year).copy()
-    df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_year'], row['sample_size']), axis=1)
-    df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_year'], row['sample_size'])[0], axis=1)
-    df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_year'], row['sample_size'])[1], axis=1)
-    years_df.append(df)
-dfs['proportions_year'] = pd.concat(years_df)
+    # Compute proportions by journal
+    journal_dfs = []
+    for code in jounal_codes:
+        df = compute_proportions_by_journal(data, code).copy()
+        df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_journal'], row['sample_size']), axis=1)
+        df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_journal'], row['sample_size'])[0], axis=1)
+        df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_journal'], row['sample_size'])[1], axis=1)
+        journal_dfs.append(df)
+    dfs['proportions_journal'] = pd.concat(journal_dfs)
 
-# Compute proportions by journal
-journal_dfs = []
-for code in jounal_codes:
-    df = compute_proportions_by_journal(data, code).copy()
-    df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_journal'], row['sample_size']), axis=1)
-    df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_journal'], row['sample_size'])[0], axis=1)
-    df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_journal'], row['sample_size'])[1], axis=1)
-    journal_dfs.append(df)
-dfs['proportions_journal'] = pd.concat(journal_dfs)
+    # Compute proportions by sample source
+    source_dfs = []
+    for code in source_codes:
+        df = compute_proportions_by_sample_source(data, code).copy()
+        df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_sample_source'], row['sample_size']), axis=1)
+        df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_source'], row['sample_size'])[0], axis=1)
+        df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_source'], row['sample_size'])[1], axis=1)
+        source_dfs.append(df)
+    dfs['proportions_sample_source'] = pd.concat(source_dfs)
 
-# Compute proportions by sample source
-source_dfs = []
-for code in source_codes:
-    df = compute_proportions_by_sample_source(data, code).copy()
-    df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_sample_source'], row['sample_size']), axis=1)
-    df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_source'], row['sample_size'])[0], axis=1)
-    df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_source'], row['sample_size'])[1], axis=1)
-    source_dfs.append(df)
-dfs['proportions_sample_source'] = pd.concat(source_dfs)
+    # Compute proportions by sample method
+    method_dfs = []
+    for code in method_codes:
+        df = compute_proportions_by_sample_method(data, code).copy()
+        df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_sample_method'], row['sample_size']), axis=1)
+        df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_method'], row['sample_size'])[0], axis=1)
+        df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_method'], row['sample_size'])[1], axis=1)
+        method_dfs.append(df)
+    dfs['proportions_sample_method'] = pd.concat(method_dfs)
 
-# Compute proportions by sample method
-method_dfs = []
-for code in method_codes:
-    df = compute_proportions_by_sample_method(data, code).copy()
-    df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_sample_method'], row['sample_size']), axis=1)
-    df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_method'], row['sample_size'])[0], axis=1)
-    df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_sample_method'], row['sample_size'])[1], axis=1)
-    method_dfs.append(df)
-dfs['proportions_sample_method'] = pd.concat(method_dfs)
+    # Compute proportions by sample platform
+    platform_dfs = []
+    for code in platform_codes:
+        df = compute_proportions_by_sample_platform(data, code).copy()
+        df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_platform'], row['sample_size']), axis=1)
+        df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_platform'], row['sample_size'])[0], axis=1)
+        df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_platform'], row['sample_size'])[1], axis=1)
+        platform_dfs.append(df)
+    dfs['proportions_platform'] = pd.concat(platform_dfs)
 
-# Compute proportions by sample platform
-platform_dfs = []
-for code in platform_codes:
-    df = compute_proportions_by_sample_platform(data, code).copy()
-    df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_platform'], row['sample_size']), axis=1)
-    df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_platform'], row['sample_size'])[0], axis=1)
-    df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_platform'], row['sample_size'])[1], axis=1)
-    platform_dfs.append(df)
-dfs['proportions_platform'] = pd.concat(platform_dfs)
+    # Compute proportions by CR method
+    cr_methods_dfs = []
+    for code in cr_method_codes:
+        df = compute_cr_method_proportions(data, code).copy()
+        df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_cr_method'], row['sample_size']), axis=1)
+        df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_method'], row['sample_size'])[0], axis=1)
+        df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_method'], row['sample_size'])[1], axis=1)
+        cr_methods_dfs.append(df)
+    dfs['proportions_cr_method'] = pd.concat(cr_methods_dfs)
 
-# Compute proportions by CR method
-cr_methods_dfs = []
-for code in cr_method_codes:
-    df = compute_cr_method_proportions(data, code).copy()
-    df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_cr_method'], row['sample_size']), axis=1)
-    df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_method'], row['sample_size'])[0], axis=1)
-    df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_method'], row['sample_size'])[1], axis=1)
-    cr_methods_dfs.append(df)
-dfs['proportions_cr_method'] = pd.concat(cr_methods_dfs)
-
-# Compute proportions by CR method type
-cr_type_dfs = []
-for method_type in cr_method_types:
-    df = compute_cr_method_type_proportions(data, method_type).copy()
-    df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_cr_type'], row['sample_size']), axis=1)
-    df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_type'], row['sample_size'])[0], axis=1)
-    df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_type'], row['sample_size'])[1], axis=1)
-    cr_type_dfs.append(df)
-dfs['proportions_cr_type'] = pd.concat(cr_type_dfs)
+    # Compute proportions by CR method type
+    cr_type_dfs = []
+    for method_type in cr_method_types:
+        df = compute_cr_method_type_proportions(data, method_type).copy()
+        df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_cr_type'], row['sample_size']), axis=1)
+        df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_type'], row['sample_size'])[0], axis=1)
+        df['ci_upper'] = df.apply(lambda row: compute_confidence_interval(row['proportions_cr_type'], row['sample_size'])[1], axis=1)
+        cr_type_dfs.append(df)
+    dfs['proportions_cr_type'] = pd.concat(cr_type_dfs)
 
 
-#----- Export ----------------------------------------------------------------------------------------------------------------------
-# # export to excel workbook
-with pd.ExcelWriter('results/raw_proportions.xlsx') as writer:
-    for name, df in dfs.items():
-        df.to_excel(writer, sheet_name=name, index=False)
+    #----- Export ----------------------------------------------------------------------------------------------------------------------
+    # # export to excel workbook
+    with pd.ExcelWriter('results/raw_proportions.xlsx') as writer:
+        for name, df in dfs.items():
+            df.to_excel(writer, sheet_name=name, index=False)
+if __name__ == '__main__':
+    main()
