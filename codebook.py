@@ -3,6 +3,8 @@
 # numeric values in the dataset to meaningful labels. It only includes the
 # variables that were recoded to numeric labels. 
 
+#TODO: add new coding scheme for cr method type
+
 codebook = { 
     'journal_code': {
         'Journal of Applied Psychology': 0,

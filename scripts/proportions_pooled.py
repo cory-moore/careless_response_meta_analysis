@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 from scipy.stats import norm
 
-#----- Functions ------------------------------------------------------------------------------------------------------------------
 
 def calculate_logit_transform(p):
     """ Takes a proportion p as input and calculates the logit transformation of the proportion."""
@@ -167,5 +166,6 @@ def main():
 
     # # export the pooled results to a csv
     pooled_results.to_csv('results/pooled_proportions.csv', index=False)
+    
 if __name__ == '__main__':
     main()

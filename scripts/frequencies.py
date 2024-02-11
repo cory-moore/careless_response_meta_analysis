@@ -2,19 +2,19 @@
 import pandas as pd
 
 from collections import Counter
-from scripts.codebook import codebook
+from codebook import codebook
 
-#----- Functions ------------------------------------------------------------------------------------------------------------------
+
 def get_frequencies(data, variable):
     counter = Counter(data[variable])
     total = sum(counter.values())
-    # Create dataframe with code, count, and percentage
+   
     df = pd.DataFrame({
         'code': list(counter.keys()),
         'count': list(counter.values()),
         'percentage': [round(value / total * 100, 2) for value in counter.values()]
     })
-    # Map code values to sample source names from codebook
+   
     df[variable] = df['code'].map(codebook[variable])
     df = df[[variable, 'code', 'count', 'percentage']]
     df = df.sort_values(by='code')
@@ -61,7 +61,8 @@ def get_cr_method_type_frequencies(data):
 
 
 def main():
-    data = pd.read_csv('data/prelim_careless_data.csv')
+
+    data = pd.read_csv('data/careless_data.csv')
 
     # List of variables by type to get frequencies for
     variables = ['sample_source', 'sample_recruitment', 'sample_method', 'sample_platform', 'sample_level',
@@ -89,5 +90,6 @@ def main():
     with pd.ExcelWriter('results/frequencies.xlsx') as writer:
         for variable, df in dfs.items():
             df.to_excel(writer, sheet_name=variable, index=False)
+            
 if __name__ == '__main__':
     main()

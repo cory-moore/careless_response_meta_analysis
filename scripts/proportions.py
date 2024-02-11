@@ -2,10 +2,10 @@
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
-from scripts.codebook import codebook
+from codebook import codebook
 from scripts.frequencies import add_cr_method_type
 
-#----- Functions ------------------------------------------------------------------------------------------------------------------
+
 def compute_proportions(data, cr_total):
     """Compute proportion of CR total amount to sample size"""
     cr_proportion_total = data[cr_total] / data['sample_size']
@@ -123,7 +123,7 @@ def compute_cr_method_type_proportions(data, cr_method_type):
     return subset_df
 
 def main():
-    data = pd.read_csv('data/prelim_careless_data.csv')
+    data = pd.read_csv('data/careless_data.csv')
     data['journal_code'] = data['journal'].map(codebook['journal_code'])
     data['sample_platform']
     dfs = {}
@@ -213,11 +213,10 @@ def main():
         cr_type_dfs.append(df)
     dfs['proportions_cr_type'] = pd.concat(cr_type_dfs)
 
-
-    #----- Export ----------------------------------------------------------------------------------------------------------------------
-    # # export to excel workbook
+    # Write results to excel
     with pd.ExcelWriter('results/raw_proportions.xlsx') as writer:
         for name, df in dfs.items():
             df.to_excel(writer, sheet_name=name, index=False)
+
 if __name__ == '__main__':
     main()
