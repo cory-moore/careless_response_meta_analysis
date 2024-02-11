@@ -35,14 +35,16 @@ Sample Platform,prolific,0.0679,0.0888,0.0577,0.0798,2317,7
 Sample Platform,university platform,0.2347,0.1095,0.1983,0.2754,557,2
 Sample Platform,mixture,0.3027,0.1071,0.2603,0.3487,413,1
 Sample Platform,other,0.1033,0.1213,0.0833,0.1275,901,4
-Careless Response Method,attention check items / bogus items / instructed response,0.1718,0.0423,0.1603,0.1839,6385,24
-Careless Response Method,completion pace / response time,0.1351,0.0702,0.1199,0.1521,2296,8
+Careless Response Method,instructed response items,0.1718,0.0423,0.1603,0.1839,6385,24
+Careless Response Method,response time,0.1351,0.0702,0.1199,0.1521,2296,8
 Careless Response Method,max longstring,0.0238,0.1883,0.0166,0.0341,1652,5
 Careless Response Method,mahalanobis D,0.037,0.1442,0.0281,0.0485,1563,5
 Careless Response Method,univariate outlier,0.0141,0.5042,0.0053,0.037,283,1
 Careless Response Method,SRSI use me,0.0183,0.5042,0.0069,0.0477,219,1
 Careless Response Method,consistency,0.0252,0.2709,0.015,0.0421,557,2
 Careless Response Method,PsySyn,0.0195,0.3365,0.0102,0.037,462,1
+Careless Response Method,Bogus items,0.0795,0.1145,0.0645,0.0975,1213,5
+Careless Response Method,Unspecified Attention Check items,0.1123,0.0676,0.0998,0.1262,3233,11
 Careless Response Type,response_time,0.1352,0.0702,0.1199,0.1521,2296,8
 Careless Response Type,outlier_analysis,0.0344,0.1387,0.0264,0.0447,1846,6
 Careless Response Type,bogus_items,0.1718,0.0423,0.1603,0.1839,6385,24

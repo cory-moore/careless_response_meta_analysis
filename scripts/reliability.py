@@ -6,7 +6,6 @@ import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
-# ----- Functions ------------------------------------------------------------------------------------------------------------------
 def calculate_icc2k(data):
     """
     Calculate ICC2k for every column in data except ID and rater

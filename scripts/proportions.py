@@ -123,6 +123,7 @@ def compute_cr_method_type_proportions(data, cr_method_type):
     return subset_df
 
 def main():
+
     data = pd.read_csv('data/careless_data.csv')
     data['journal_code'] = data['journal'].map(codebook['journal_code'])
     data['sample_platform']
@@ -135,12 +136,13 @@ def main():
     dfs['proportions_total'] = proportions_total_df
 
     # compute cr proportions by various groupings
+    # TODO: these needs to be able to update dynamically! hardcoded fixed values is not ideal
     years = range(2000, 2023)
     jounal_codes = range(24)
     source_codes = range(4)
     method_codes = range(4)
     platform_codes = range(6)
-    cr_method_codes = range(12)
+    cr_method_codes = range(14)
     cr_method_types = ['response_time', 'outlier_analysis', 'bogus_items', 'consistency_indices', 'response_pattern', 'self_reported']
 
     # Compute proportions by year
@@ -214,7 +216,7 @@ def main():
     dfs['proportions_cr_type'] = pd.concat(cr_type_dfs)
 
     # Write results to excel
-    with pd.ExcelWriter('results/raw_proportions.xlsx') as writer:
+    with pd.ExcelWriter('results/proportions.xlsx') as writer:
         for name, df in dfs.items():
             df.to_excel(writer, sheet_name=name, index=False)
 

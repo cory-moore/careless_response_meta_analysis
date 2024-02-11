@@ -135,8 +135,8 @@ codebook = {
     },
     'cr_method': {
         -1: '',
-        0: 'attention check items / bogus items / instructed response',
-        1: 'completion pace / response time',
+        0: 'instructed response items',
+        1: 'response time',
         2: 'avg longstring',
         3: 'max longstring',
         4: 'mahalanobis D',
@@ -146,12 +146,14 @@ codebook = {
         8: 'SRSI attention',
         9: 'consistency',
         10: 'PsySyn',
-        11: 'PsyAnt'
+        11: 'PsyAnt',
+        12: 'Bogus items',
+        13: 'Unspecified Attention Check items'
     },
     'cr_method_type': {
         'response_time': [1],
         'outlier_analysis': [4, 5],
-        'bogus_items': [0],
+        'attention_check_items': [0, 12, 13],
         'consistency_indices': [9, 10, 11],
         'response_pattern': [2, 3],
         'self_reported': [6, 7, 8]
