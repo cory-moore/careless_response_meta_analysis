@@ -1,39 +1,7 @@
 
-# This file is the codebook for the dataset. It is used to convert the
-# numeric values in the dataset to meaningful labels. It only includes the
-# variables that were recoded to numeric labels. 
-
-#TODO: add new coding scheme for cr method type
+#TODO: cross reference excel codebook for latest version
 
 codebook = { 
-    'journal_code': {
-        'Journal of Applied Psychology': 0,
-        'Personnel Psychology': 1,
-        'Academy of Management Journal': 2,
-        'Organizational Research Methods': 3,
-        'Journal of Management': 4,
-        'Organizational Behavior and Human Decision Processes': 5,
-        'Journal of Organizational Behavior': 6,
-        'The Leadership Quarterly': 7,
-        'Journal of Occupational Health Psychology': 8,
-        'Journal of Vocational Behavior': 9,
-        'Journal of Business and Psychology': 10,
-        'Journal of Occupational and Organizational Psychology': 11,
-        'Educational and Psychological Measurement': 12,
-        'Journal of Applied Social Psychology': 13,
-        'Academy of Management Learning and Education': 14,
-        'International Journal of Selection and Assessment': 15,
-        'European Journal of Work and Organizational Psychology': 16,
-        'Human Performance': 17,
-        'Human Relations': 18,
-        'Personality and Individual Differences': 19,
-        'Applied Psychology: An International Review': 20,
-        'Work & Stress': 21,
-        'Group and Organization Management': 22,
-        'Journal of Personnel Psychology': 23,
-        'Journal of Managerial Psychology': 24,
-        'Dissertations': 25
-    },
     'journal': {
         0: 'Journal of Applied Psychology',
         1: 'Personnel Psychology',
@@ -65,9 +33,9 @@ codebook = {
     'sample_source': {
         -1: 'unspecified',
         0: 'student',
-        1: 'employee',
-        2: 'student-employee',
-        3: 'mixture'
+        1: 'employee_working_adult',
+        2: 'student_employee',
+        3: 'other_mixture'
     },
     'sample_recruitment': {
         -1: 'unspecified',
@@ -82,9 +50,8 @@ codebook = {
     'sample_method': {
         -1: 'unspecified',
         0: 'random',
-        1: 'volunteer',
-        2: 'snowball',
-        3: 'conveniance'
+        1: 'conveniance',
+        2: 'snowball'
     },
     'sample_platform': {
         -1: 'unspecified',
@@ -104,9 +71,10 @@ codebook = {
         -1: 'unspecified',
         0: 'undergraduate',
         1: 'graduate',
-        2: 'non-managerial',
+        2: 'non_managerial',
         3: 'managerial',
-        4: 'mixture'
+        4: 'mixture',
+        5: 'faculty'
     },
     'sample_incentive': {
         -1: 'unspecified',
@@ -114,15 +82,19 @@ codebook = {
         1: 'course credit',
         2: 'financial',
         3: 'raffle',
-        4: 'results/feedback',
-        5: 'mixture'
+        4: 'results_feedback',
+        5: 'mixture',
+        6: 'training'
     },
     'sample_country': {
         -1: 'unspecified',
         0: 'north america',
         1: 'international mixture',
         2: 'UK',
-        3: 'Germany'
+        3: 'Germany',
+        4: 'Nigeria',
+        5: 'Israel',
+        6: 'India'
     },
     'cr_multiple': {
         0: 'no',
@@ -144,18 +116,21 @@ codebook = {
         6: 'SRSI use me',
         7: 'SRSI effort',
         8: 'SRSI attention',
-        9: 'consistency',
+        9: 'even-odd consistency',
         10: 'PsySyn',
         11: 'PsyAnt',
         12: 'Bogus items',
-        13: 'Unspecified Attention Check items'
+        13: 'unspecified attention check item',
+        14: 'unspecified longstring',
+        15: 'inter-item sd',
+        16: 'person-total correlation'
     },
     'cr_method_type': {
         'response_time': [1],
         'outlier_analysis': [4, 5],
         'attention_check_items': [0, 12, 13],
-        'consistency_indices': [9, 10, 11],
-        'response_pattern': [2, 3],
+        'consistency_indices': [9, 10, 11, 15, 16],
+        'response_pattern': [2, 3, 14],
         'self_reported': [6, 7, 8]
     },
     'design_time': {
@@ -171,9 +146,11 @@ codebook = {
     'design_location': {
         -1: '',
         0: 'online',
-        1: 'in-person'
+        1: 'in-person',
+        2: 'mixture'
     }
 }
 
 
 
+					
