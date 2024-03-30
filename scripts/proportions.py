@@ -125,7 +125,7 @@ def compute_cr_method_type_proportions(data, cr_method_type):
 def main():
 
     data = pd.read_csv('data/careless_data.csv')
-    data['journal_code'] = data['journal'].map(codebook['journal_code'])
+    data['journal_code'] = data['journal'].map({v: k for k, v in codebook['journal'].items()})
     data['sample_platform']
     dfs = {}
 
@@ -135,15 +135,13 @@ def main():
     proportions_total_df['ci_lower'], proportions_total_df['ci_upper'] = zip(*proportions_total_df.apply(lambda row: compute_confidence_interval(row['proportions_total'], row['sample_size']), axis=1))
     dfs['proportions_total'] = proportions_total_df
 
-    # compute cr proportions by various groupings
-    # TODO: these needs to be able to update dynamically! hardcoded fixed values is not ideal
     years = range(2000, 2023)
-    jounal_codes = range(24)
-    source_codes = range(4)
-    method_codes = range(4)
-    platform_codes = range(6)
-    cr_method_codes = range(14)
-    cr_method_types = ['response_time', 'outlier_analysis', 'bogus_items', 'consistency_indices', 'response_pattern', 'self_reported']
+    journal_codes = range(len(codebook['journal']))
+    source_codes = range(len(codebook['sample_source']) - 1) #include minus one to exclude unspecified
+    method_codes = range(len(codebook['sample_method']) - 1) #include minus one to exclude unspecified
+    platform_codes = range(len(codebook['sample_platform']) - 1) #include minus one to exclude unspecified
+    cr_method_codes = range(len(codebook['cr_method']) - 1) #include minus one to exclude unspecified
+    cr_method_types = list(codebook['cr_method_type'].keys())
 
     # Compute proportions by year
     years_df = []
@@ -157,7 +155,7 @@ def main():
 
     # Compute proportions by journal
     journal_dfs = []
-    for code in jounal_codes:
+    for code in journal_codes:
         df = compute_proportions_by_journal(data, code).copy()
         df['se'] = df.apply(lambda row: compute_standard_errors(row['proportions_journal'], row['sample_size']), axis=1)
         df['ci_lower'] = df.apply(lambda row: compute_confidence_interval(row['proportions_journal'], row['sample_size'])[0], axis=1)
