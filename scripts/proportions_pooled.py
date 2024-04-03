@@ -7,6 +7,7 @@ from scipy.stats import norm
 
 def calculate_logit_transform(p):
     """ Takes a proportion p as input and calculates the logit transformation of the proportion."""
+    p = np.clip(p, 1e-5, 1 - 1e-5)    
     return np.log(p / (1 - p))
 
 def calculate_logit_variance(p, n):
@@ -15,6 +16,7 @@ def calculate_logit_variance(p, n):
     The formula is derived from the properties of the logit transformation. 
     The logit variance formula calculates the variance of the logit-transformed proportion without needing to input the logit-transformed proportions directly.
     """
+    p = np.clip(p, 1e-5, 1 - 1e-5)
     return 1 / (n * p) + 1 / (n * (1 - p))
 
 def calculate_pooled_prevalence(logit_p, n, p):
