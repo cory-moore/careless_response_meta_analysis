@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import scipy.stats as stats
 from codebook import codebook
-from src.count import *
-
 
 def compute_proportions(data, cr_total):
     """Compute proportion of CR total amount to sample size"""
