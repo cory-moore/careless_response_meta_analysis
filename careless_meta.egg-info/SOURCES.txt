@@ -1,0 +1,13 @@
+setup.py
+careless_meta.egg-info/PKG-INFO
+careless_meta.egg-info/SOURCES.txt
+careless_meta.egg-info/dependency_links.txt
+careless_meta.egg-info/top_level.txt
+scripts/__init__.py
+scripts/forest_plot.py
+scripts/frequencies.py
+scripts/heterogeneity.py
+scripts/preprocess.py
+scripts/proportions.py
+scripts/proportions_pooled.py
+scripts/reliability.py
