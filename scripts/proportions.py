@@ -1,9 +1,8 @@
-
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
 from codebook import codebook
-from scripts.frequencies import add_cr_method_type
+from src.count import *
 
 
 def compute_proportions(data, cr_total):
@@ -14,18 +13,25 @@ def compute_proportions(data, cr_total):
 
 def compute_standard_errors(p, n):
     """Calculate standard errors for a given proportion and sample size."""
+    if pd.isna(p) or pd.isna(n) or n == 0:
+        return np.nan
+    p = np.clip(p, 0, 1)
     return np.sqrt(p * (1 - p) / n)
 
 def compute_confidence_interval(p, n, alpha=0.05):
     """
     Compute the confidence interval for a proportion.
     """
+    if pd.isna(p) or pd.isna(n) or n == 0:
+        return np.nan, np.nan
+    p = np.clip(p, 0, 1)
     z = stats.norm.ppf(1 - alpha / 2)
-    ci_lower = p - z * np.sqrt(p * (1 - p) / n)
-    ci_upper = p + z * np.sqrt(p * (1 - p) / n)
-    ci_lower = round(ci_lower, 4)
-    ci_upper = round(ci_upper, 4)
-    return ci_lower, ci_upper
+    se = compute_standard_errors(p, n)
+    ci_lower = p - z * se
+    ci_upper = p + z * se
+    ci_lower = np.clip(ci_lower, 0, 1)
+    ci_upper = np.clip(ci_upper, 0, 1)
+    return round(ci_lower, 4), round(ci_upper, 4)
 
 def compute_proportions_by_year(data, year):
     """Compute proportion of CR for a given year"""
