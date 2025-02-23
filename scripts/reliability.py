@@ -1,48 +1,78 @@
 import pandas as pd
 import pingouin as pg
+import numpy as np
+from statsmodels.stats.inter_rater import fleiss_kappa
 
-import warnings
-
-warnings.filterwarnings("ignore", category=RuntimeWarning)
-
-
-def calculate_icc2k(data):
-    """
-    Calculate ICC2k for every column in data except ID and rater
-    icc['ICC'][4] == ICC2k
-    """
-    icc2k_results = pd.DataFrame(columns=["column", "ICC2k"])
-    for column in data.columns:
-        if column not in ["ID", "rater"]:
-            icc = pg.intraclass_corr(
-                data=data, targets="ID", raters="rater", ratings=column
-            )
-            icc2k = pd.DataFrame({"column": [column], "ICC2k": [icc["ICC"][4]]})
-            icc2k_results = pd.concat([icc2k_results, icc2k])
-    icc2k_mean = icc2k_results["ICC2k"].mean()
-    return icc2k_results, icc2k_mean
-
+def calculate_reliability(data):
+    """Calculate appropriate reliability statistics based on variable type"""
+    exclude_cols = ['rater', 'title', 'authors', 'journal', 'Notes', 'year', 'ID', 'mturk_acceptance',
+                    'sample_incentive_amount', 'sample_mturk', 'cr_1_method_detail', 'cr_2_method_detail',
+                    'cr_3_method_detail', 'cr_4_method_detail', 'total_items']
+    
+    continuous_vars = [
+        'sample_size', 
+        'sample_age',
+        'cr_total_amount',
+        'cr_1_amount',
+        'cr_2_amount',
+        'cr_3_amount',
+        'cr_4_amount'
+    ]
+    
+    results = []
+    for col in data.columns:
+        if col not in exclude_cols:
+            try:
+                if col in continuous_vars:
+                    # Handle continuous variables with ICC
+                    icc = pg.intraclass_corr(
+                        data=data,
+                        targets='ID',
+                        raters='rater',
+                        ratings=col,
+                        nan_policy='omit'
+                    )
+                    reliability = icc.loc[icc['Type'] == 'ICC2k', 'ICC'].iloc[0]
+                    method = 'ICC2k'
+                else:
+                    # Handle categorical variables with Fleiss' Kappa
+                    unique_vals = sorted(data[col].unique())
+                    val_map = {val: i for i, val in enumerate(unique_vals)}
+                    
+                    pivot_data = data.pivot(index='ID', columns='rater', values=col)
+                    n_subjects = len(pivot_data)
+                    n_categories = len(val_map)
+                    ratings_matrix = np.zeros((n_subjects, n_categories))
+                    
+                    for idx, row in pivot_data.iterrows():
+                        for rating in row:
+                            if pd.notna(rating):
+                                category_idx = val_map[rating]
+                                ratings_matrix[pivot_data.index.get_loc(idx), category_idx] += 1
+                    
+                    reliability = fleiss_kappa(ratings_matrix)
+                    method = "Fleiss' Kappa"
+                
+                results.append({
+                    'Variable': col,
+                    'Type': 'continuous' if col in continuous_vars else 'categorical',
+                    'Method': method,
+                    'Reliability': reliability,
+                    'N_unique': len(unique_vals)
+                })
+                
+            except Exception as e:
+                print(f"Error calculating reliability for {col}: {str(e)}")
+    
+    return pd.DataFrame(results)
 
 def main():
-    rater0_data = pd.read_csv("data/careless_data.csv")
-    rater0_data["rater"] = 0
-
-    #TODO: will need to expand this handle multiple raters
-    rater1_data = pd.read_csv("data/rater_data.csv")
-    rater1_data["rater"] = 1
-
-    # combine data from both raters and only keep rows with a duplicate value in ID column
-    # duplicate values correspond to studies that were coded by both raters
-    data = pd.concat([rater0_data, rater1_data], ignore_index=True)
-    data = (
-        data[data.duplicated(subset="ID", keep=False)]
-        .sort_values("ID")
-        .drop(columns=["title", "year", "authors", "journal", "doi", "Notes"])
-    )
-
-    # calculate ICC2k
-    icc2k_results, icc2k_mean = calculate_icc2k(data)
-
+    data = pd.read_csv('data/rater_data.csv')
+    results = calculate_reliability(data)
+    
+    print("\nResults Summary:")
+    print(results.sort_values('Reliability', ascending=False))
+    results.to_csv('results/reliability_results.csv', index=False)
 
 if __name__ == "__main__":
     main()
