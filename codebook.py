@@ -1,6 +1,3 @@
-
-#TODO: cross reference excel codebook for latest version
-
 codebook = { 
     'journal': {
         0: 'Journal of Applied Psychology',
@@ -31,7 +28,6 @@ codebook = {
         25: 'Dissertations'
     },
     'sample_source': {
-        -1: 'unspecified',
         0: 'student',
         1: 'employee_working_adult',
         2: 'student_employee',
@@ -94,7 +90,13 @@ codebook = {
         3: 'Germany',
         4: 'Nigeria',
         5: 'Israel',
-        6: 'India'
+        6: 'India',
+        7: 'China',
+        8: 'Australia',
+        9: 'South Korea',
+        10: 'Croatia',
+        11: 'Belgium', 
+        12: 'Netherlands'
     },
     'cr_multiple': {
         0: 'no',
@@ -123,7 +125,8 @@ codebook = {
         13: 'unspecified attention check item',
         14: 'unspecified longstring',
         15: 'inter-item sd',
-        16: 'person-total correlation'
+        16: 'person-total correlation',
+        17: 'unspecified response pattern'
     },
     'cr_method_type': {
         'response_time': [1],
@@ -150,7 +153,6 @@ codebook = {
         2: 'mixture'
     }
 }
-
 
 
 					
