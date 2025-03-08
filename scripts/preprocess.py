@@ -1,5 +1,7 @@
 import pandas as pd
-from codebook import codebook
+from utils import load_codebook
+
+codebook = load_codebook('codebook.json')
 
 def generate_unique_id(row, id_dict):
     first_name = row['authors'].split(',')[0].split(' ')[0]
@@ -158,7 +160,7 @@ def check_logical_rules(df):
     codebook_errors = False
     for col, valid_values in codebook.items():
         if col != 'journal' and col in df.columns:
-            invalid = df[~df[col].isin(valid_values.keys())]
+            invalid = df[~df[col].isin([int(k) for k in valid_values.keys()])]
             if len(invalid) > 0:
                 codebook_errors = True
                 print(f"\n  Invalid {col} values:")

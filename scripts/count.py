@@ -1,6 +1,6 @@
 import pandas as pd
 from collections import Counter
-from codebook import codebook
+from utils import load_codebook
 
 def get_frequencies(data, variable):
     counter = Counter(data[variable])
@@ -12,6 +12,7 @@ def get_frequencies(data, variable):
         'percentage': [round(value / total * 100, 2) for value in counter.values()]
     })
    
+    codebook = load_codebook('codebook.json')
     df[variable] = df['code'].map(codebook[variable])
     df = df[[variable, 'code', 'count', 'percentage']]
     df = df.sort_values(by='code')
@@ -22,6 +23,7 @@ def get_cr_method_frequencies(data):
     cr_methods = data[cr_columns].stack()
     cr_methods = cr_methods[cr_methods != -1]
     cr_freq = cr_methods.value_counts().reset_index()
+    codebook = load_codebook('codebook.json')
     cr_freq['cr_method'] = cr_freq['index'].map(codebook['cr_method'])
     total_studies = len(data)
     cr_freq['percentage'] = round(cr_freq[0] / total_studies * 100, 2)
@@ -31,6 +33,7 @@ def get_cr_method_frequencies(data):
 
 def add_cr_method_type(data):
     cr_columns = ['cr_1_method', 'cr_2_method', 'cr_3_method', 'cr_4_method']
+    codebook = load_codebook('codebook.json')
     # Use the cr_method_type mapping from the codebook
     cr_method_type_map = codebook['cr_method_type']
     # Loop over the cr_columns and add a new column for each cr_method type
