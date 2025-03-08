@@ -1,3 +1,13 @@
-venv/*
-results/*
-data/*
+# Python virtual environment
+venv/
+
+# Results directory
+results/
+
+# Data directory
+data/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
