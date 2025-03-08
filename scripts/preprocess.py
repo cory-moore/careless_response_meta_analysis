@@ -18,46 +18,6 @@ def add_unique_id(df, id_dict):
     df['ID'] = df.apply(lambda row: generate_unique_id(row, id_dict), axis=1)
     return df
 
-def combine_coder_sheets(file_path):
-    """
-    Combines individual coder sheets while maintaining consistent IDs across raters.
-    Each rater's sheet gets sequential IDs (a, b, c...) in the same order.
-    """
-    excel_file = pd.ExcelFile(file_path)
-    dfs = []
-    for sheet_name in excel_file.sheet_names:
-        df = pd.read_excel(file_path, sheet_name=sheet_name)
-        df = df.sort_values('title').reset_index(drop=True)
-        df = add_unique_id(df, {})
-        df['rater'] = sheet_name
-        dfs.append(df)
-    combined_df = pd.concat(dfs, ignore_index=True)
-    cols = combined_df.columns.tolist()
-    cols = ['rater'] + [col for col in cols if col != 'rater']
-    combined_df = combined_df[cols]
-    return combined_df
-
-def check_rater_coverage(rater_data):
-    """
-    Check coverage of studies across raters.
-    """
-    rater_counts = rater_data['rater'].value_counts()
-    print("########################################################")
-    print("\nRATER COVERAGE:")
-    print("\nNumber of studies coded by each rater:")
-    print(rater_counts)
-    
-    # Check study coverage using standardized IDs
-    study_coverage = rater_data.groupby('ID')['rater'].agg(['unique', 'count'])
-    missing_studies = study_coverage[study_coverage['count'] < len(rater_data['rater'].unique())]
-    
-    if len(missing_studies) > 0:
-        print("\nWarning: The following studies were not coded by all raters:")
-        print(missing_studies)
-    else:
-        print("\nAll studies were coded by all raters")
-    print("\n########################################################")
-
 def check_basic_info(df):
     """Basic dataset information."""
     print("\nBASIC INFORMATION:")
@@ -370,21 +330,18 @@ def process_meta_data(df, diagnostics=None):
     print("\n########################################################")
     return processed_df
 
-def process_data(data_path, rater_data_path):
-    """Main data processing function"""
+def process_data(data_path):
+    """Main data processing function for meta-analysis data only"""
     data = pd.read_excel(data_path)
     data = add_unique_id(data, {})
     cleaned_data = process_meta_data(data)
     cleaned_data.to_csv("data/careless_data.csv", index=False)
-
-    rater_data = combine_coder_sheets(rater_data_path)
-    check_rater_coverage(rater_data)
-    rater_data.to_csv("data/rater_data.csv", index=False)
     
-    return cleaned_data, rater_data
+    return cleaned_data
+
+def main():
+    data_path = "data/coded_study_data_all.xlsx"
+    process_data(data_path)
 
 if __name__ == "__main__":
-    data_path = "/Users/corymoore/Library/CloudStorage/GoogleDrive-cmoore24@ncsu.edu/.shortcut-targets-by-id/1vWDqJojoig5JxYelOR5O7o-U-YbiHeqr/Professional work/doctoral_work/2_projects/Careless Meta/Data/coded_study_data_all.xlsx"
-    rater_data_path = "/Users/corymoore/Library/CloudStorage/GoogleDrive-cmoore24@ncsu.edu/.shortcut-targets-by-id/1vWDqJojoig5JxYelOR5O7o-U-YbiHeqr/Professional work/doctoral_work/2_projects/Careless Meta/Data/shared_studies_coded.xlsx"
-    
-    process_data(data_path, rater_data_path)
+    main()
