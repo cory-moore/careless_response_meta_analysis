@@ -56,7 +56,7 @@ def create_funnel_plot(p, se):
 def main():
     #----- Forest plot ------------------------------------------------------------------------------------------------------------------------
     # prepare data
-    data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
+    data = pd.read_excel('output/proportions.xlsx', sheet_name='proportions_total')
     p = data['proportions_total']
     n = data['sample_size']
 
@@ -70,7 +70,7 @@ def main():
     plot = create_forest_plot(data, pooled_p, lower_ci, upper_ci)
 
     # save plot
-    #plot.savefig('results/forest_plot_left.png', dpi=300, bbox_inches='tight')
+    plot.savefig('output/forest_plot_left.png', dpi=300, bbox_inches='tight')
 
 
     #------ Funnel plot -------------------------------------------------------------------------

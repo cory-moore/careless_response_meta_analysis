@@ -221,7 +221,7 @@ def main():
     dfs['proportions_cr_type'] = pd.concat(cr_type_dfs)
 
     # Write results to excel
-    with pd.ExcelWriter('results/proportions.xlsx') as writer:
+    with pd.ExcelWriter('output/proportions.xlsx') as writer:
         for name, df in dfs.items():
             df.to_excel(writer, sheet_name=name, index=False)
 

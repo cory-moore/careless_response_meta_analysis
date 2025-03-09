@@ -43,7 +43,7 @@ def calculate_h_squared(q_statistic, k):
     return h2
 
 def main():
-    data = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_total')
+    data = pd.read_excel('output/proportions.xlsx', sheet_name='proportions_total')
     p = data['proportions_total']
     n = data['sample_size']
 
@@ -68,7 +68,7 @@ def main():
     h_squared = calculate_h_squared(Q, len(p))
 
     # -------------------------------------------
-    employees = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_sample_source')
+    employees = pd.read_excel('output/proportions.xlsx', sheet_name='proportions_sample_source')
     employees = employees[employees['sample_source_name'] == 'employee']
     p = employees['proportions_sample_source']
     n = employees['sample_size']
@@ -91,7 +91,7 @@ def main():
     print('I-squared Confidence Interval: {:.2%} - {:.2%}'.format(i_squared_lower, i_squared_upper))
 
     #--------------------------------------------
-    cr_type = pd.read_excel('results/raw_proportions.xlsx', sheet_name='proportions_cr_type')
+    cr_type = pd.read_excel('output/proportions.xlsx', sheet_name='proportions_cr_type')
     cr_type = cr_type[cr_type['cr_method_type'] == 'bogus_items']
     p = cr_type['proportions_cr_type']
     n = cr_type['sample_size']
