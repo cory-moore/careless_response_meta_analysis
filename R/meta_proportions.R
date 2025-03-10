@@ -1,13 +1,41 @@
 ###############################################################################
 # R script for random-effects meta-analysis on proportion data
 #
-# Steps:
-# 1. Load required packages
-# 2. Define meta-analysis function to analyze proportions data
-# 3. Define group analysis function to process data by categories
-# 4. Calculate overall pooled proportions
-# 5. Calculate pooled proportions by subgroups (Year, Journal, etc.)
-# 6. Export results to CSV file
+# This script performs a meta-analysis on proportions of careless 
+# responding in survey data using random-effects models. It implements the 
+# DerSimonian-Laird method for pooling proportions across studies while 
+# accounting for between-study heterogeneity.
+#
+# Workflow:
+# 1. Load required packages:
+#    - dplyr: For data manipulation and transformation
+#    - openxlsx: For reading/writing Excel files
+#    - metafor: For meta-analysis functions (rma)
+#    - meta: For additional meta-analysis utilities
+#
+# 2. Define `meta_analysis` function that:
+#    - Takes proportion values and sample sizes as inputs
+#    - Performs data validation and cleaning
+#    - Transforms proportions using logit transformation for analysis
+#    - Calculates study-specific variances based on sample size and proportion
+#    - Fits random-effects model using DerSimonian-Laird estimator
+#    - Back-transforms results to proportion scale
+#    - Returns pooled proportion, standard error, confidence intervals,
+#      heterogeneity statistics (I² and Q), and sample information
+#
+# 3. Define `analyze_group` function that:
+#    - Reads data from Excel sheets for specific categories
+#    - Calculates overall pooled proportions for each group
+#    - Performs subgroup analyses within each category
+#    - Handles errors gracefully with informative messages
+#
+# 4. Define `main` function that:
+#    - Initializes results data frame
+#    - Processes overall analysis
+#    - Defines group configurations
+#    - Processes all groups
+#    - Saves results to CSV
+#
 ###############################################################################
 
 library(dplyr)
@@ -63,30 +91,12 @@ meta_analysis <- function(p_values, n_values) {
       n_studies = nrow(meta_data)
     ))
   }, error = function(e) {
-    tryCatch({
-      meta_result <- metaprop(event = meta_data$p * meta_data$n, 
-                            n = meta_data$n,
-                            sm = "PLOGIT",
-                            method.tau = "DL")
-      
-      return(list(
-        pooled_p = round(meta_result$TE.random, 4),
-        pooled_se = round(meta_result$seTE.random, 4),
-        lower_ci = round(meta_result$lower.random, 4),
-        upper_ci = round(meta_result$upper.random, 4),
-        n_sum = sum(meta_data$n),
-        i_squared = round(meta_result$I2, 2),
-        q = round(meta_result$Q, 2),
-        n_studies = nrow(meta_data)
-      ))
-    }, error = function(e2) {
-      return(list(
-        pooled_p = round(sum(meta_data$p * meta_data$n) / sum(meta_data$n), 4),
-        pooled_se = NA, lower_ci = NA, upper_ci = NA,
-        n_sum = sum(meta_data$n), i_squared = NA, q = NA,
-        n_studies = nrow(meta_data)
-      ))
-    })
+    cat("Error in primary meta-analysis:", e$message, "\n")
+    return(list(
+      pooled_p = NA, pooled_se = NA, lower_ci = NA, upper_ci = NA,
+      n_sum = sum(meta_data$n), i_squared = NA, q = NA,
+      n_studies = nrow(meta_data)
+    ))
   })
 }
 
@@ -146,6 +156,7 @@ analyze_group <- function(sheet_name, group_name, subgroup_col, proportion_col, 
     
     return(results_df)
   }, error = function(e) {
+    cat("Error analyzing group", group_name, ":", e$message, "\n")
     return(results_df)
   })
 }
@@ -181,16 +192,11 @@ main <- function() {
   
   groups <- list(
     list(sheet = "proportions_year", name = "Year", col = "year", prop_col = "proportions_year"),
-    list(sheet = "proportions_journal", name = "Journal", col = "journal_name", 
-         prop_col = "proportions_journal"),
-    list(sheet = "proportions_sample_source", name = "Sample Source", col = "sample_source_name", 
-         prop_col = "proportions_sample_source"),
-    list(sheet = "proportions_sample_method", name = "Sample Method", col = "sample_method_name", 
-         prop_col = "proportions_sample_method"),
-    list(sheet = "proportions_platform", name = "Sample Platform", col = "sample_platform_name", 
-         prop_col = "proportions_platform"),
-    list(sheet = "proportions_cr_method", name = "Careless Response Method", col = "cr_method_name", 
-         prop_col = "proportions_cr_method")
+    list(sheet = "proportions_journal", name = "Journal", col = "journal_name", prop_col = "proportions_journal"),
+    list(sheet = "proportions_sample_source", name = "Sample Source", col = "sample_source_name", prop_col = "proportions_sample_source"),
+    list(sheet = "proportions_sample_method", name = "Sample Method", col = "sample_method_name", prop_col = "proportions_sample_method"),
+    list(sheet = "proportions_platform", name = "Sample Platform", col = "sample_platform_name", prop_col = "proportions_platform"),
+    list(sheet = "proportions_cr_method", name = "Careless Response Method", col = "cr_method_name", prop_col = "proportions_cr_method")
   )
   
   for (group in groups) {
@@ -198,10 +204,6 @@ main <- function() {
   }
   
   write.csv(pooled_results, "output/random_effects_pooled_proportions_R.csv", row.names = FALSE)
-  
-  cat("\nRandom Effects Meta-Analysis Summary (R Implementation)\n")
-  cat("====================================================\n")
-  cat("Results saved to 'output/random_effects_pooled_proportions_R.csv'\n")
 }
 
 main()

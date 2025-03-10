@@ -1,19 +1,48 @@
 ###############################################################################
-# R script to calculate proportions of careless responding
+# R script to calculate proportions of careless responding in survey data
 #
-# Steps:
-# 1. Load required packages
-# 2. Load codebook and data
-# 3. Calculate proportions of careless responding:
-#    - Overall proportions
-#    - By year
-#    - By journal
-#    - By sample source
-#    - By sample method
-#    - By sample platform
-#    - By careless responding method
-# 4. Calculate standard errors and confidence intervals for each proportion
-# 5. Export results to Excel workbook
+# This script calculates various proportions of careless responding across
+# different categories and subgroups, computes standard errors and confidence
+# intervals, and exports the results to an Excel workbook.
+#
+# Workflow:
+# 1. Load required packages:
+#    - dplyr: For data manipulation and transformation
+#    - tidyr: For reshaping data
+#    - openxlsx: For reading/writing Excel files
+#    - jsonlite: For parsing JSON codebook
+#
+# 2. Define utility functions:
+#    - load_codebook: Loads category definitions from JSON
+#    - compute_standard_errors: Calculates SE using binomial formula
+#    - compute_confidence_interval: Calculates 95% CIs with proper bounds
+#    - add_stats_to_df: Adds SE and CIs to proportion dataframes
+#
+# 3. Define proportion calculation functions:
+#    - compute_proportions: Calculates overall proportions
+#    - compute_proportions_by_year: Groups and calculates by publication year
+#    - compute_proportions_by_journal: Groups by journal with name lookup
+#    - compute_proportions_by_sample_source: Groups by sample source type
+#    - compute_proportions_by_sample_method: Groups by sampling methodology
+#    - compute_proportions_by_sample_platform: Groups by data collection platform
+#    - subset_data_by_cr_method: Extracts data for specific CR detection methods
+#    - compute_cr_method_proportions: Calculates proportions by CR method
+#
+# 4. Define process_group function:
+#    - Applies proportion calculations across multiple category values
+#    - Handles errors gracefully for each subgroup
+#    - Adds statistical measures to each result
+#    - Combines results into consolidated dataframes
+#
+# 5. Define main function that:
+#    - Loads codebook and raw data
+#    - Maps journal names to codes for consistent processing
+#    - Calculates overall proportions across the entire dataset
+#    - Defines category codes for all grouping variables
+#    - Processes all category groups using the process_group function
+#    - Creates Excel workbook with separate sheets for each category
+#    - Saves results to output directory
+#
 ###############################################################################
 
 library(dplyr)
