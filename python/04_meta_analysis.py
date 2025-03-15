@@ -1,248 +1,220 @@
-import math
-import pandas as pd
 import numpy as np
-from scipy.stats import norm, chi2
+import pandas as pd
+import os
+from scipy.stats import norm
+import json
 
-
-def calculate_logit_transform(p):
-    """Takes a proportion p as input and calculates the logit transformation."""
-    p = np.clip(p, 1e-5, 1 - 1e-5)    
+def logit_transform(p):
+    """Transform proportions to logit scale"""
+    p = np.clip(p, 0.00001, 0.99999)
     return np.log(p / (1 - p))
 
-
-def calculate_logit_variance(p, n):
-    """Calculates the within-study variance of logit-transformed proportions."""
-    p = np.clip(p, 1e-5, 1 - 1e-5)
+def logit_variance(p, n):
+    """Calculate variance for logit-transformed proportions"""
+    p = np.clip(p, 0.00001, 0.99999)
     return 1 / (n * p * (1 - p))
 
+def back_transform(logit):
+    """Convert logit values back to proportions"""
+    return np.exp(logit) / (1 + np.exp(logit))
 
-def back_transform(logit_p):
-    """Back transforms a logit value to a proportion."""
-    back_transformed_p = np.exp(logit_p) / (1 + np.exp(logit_p))
-    return round(back_transformed_p, 4)
-
-
-def calculate_Q(effect_sizes, weights):
-    """
-    Calculates the Q statistic for heterogeneity assessment.
+def calculate_Q(y, w):
+    """Calculate Q statistic for heterogeneity
     
-    Args:
-        effect_sizes: List or array of effect sizes (logit-transformed proportions)
-        weights: List or array of weights (inverse of within-study variances)
-        
+    Parameters:
+    y - logit-transformed proportions
+    w - inverse variance weights
+    
     Returns:
-        Q: Q statistic
-        df: Degrees of freedom
-        p_value: P-value for the Q test
+    Q statistic, degrees of freedom
     """
-    k = len(effect_sizes)
-    weighted_mean = np.sum(weights * effect_sizes) / np.sum(weights)
-    Q = np.sum(weights * np.square(effect_sizes - weighted_mean))
-    df = k - 1
-    p_value = 1 - chi2.cdf(Q, df)
-    return Q, df, p_value
+    weighted_mean = np.sum(w * y) / np.sum(w)
+    Q = np.sum(w * (y - weighted_mean)**2)
+    df = len(y) - 1
+    return Q, df
 
-
-def calculate_tau_squared(Q, df, weights):
-    """
-    Calculates the between-study variance (τ²) using the DerSimonian-Laird estimator.
+def calculate_tau_squared(Q, df, w):
+    """Calculate between-study variance using DerSimonian-Laird method
     
-    Args:
-        Q: Q statistic
-        df: Degrees of freedom
-        weights: Weights (inverse of within-study variances)
-        
+    Parameters:
+    Q - Q statistic for heterogeneity
+    df - degrees of freedom
+    w - inverse variance weights (fixed-effects)
+    
     Returns:
-        tau_squared: Estimate of between-study variance
+    tau² (between-study variance)
     """
-    sum_weights = np.sum(weights)
-    sum_squared_weights = np.sum(np.square(weights))
-    
-    # DerSimonian-Laird estimator
-    tau_squared = max(0, (Q - df) / (sum_weights - (sum_squared_weights / sum_weights)))
-    return tau_squared
+    sum_w = np.sum(w)
+    sum_w2 = np.sum(w**2)
+    denominator = sum_w - (sum_w2 / sum_w)
+    if denominator <= 0:
+        return 0
+    return max(0, (Q - df) / denominator)
 
-
-def calculate_i_squared(Q, df):
-    """
-    Calculates I² - the percentage of variation due to heterogeneity.
+def calculate_I_squared(Q, df):
+    """Calculate I² heterogeneity statistic
     
-    Args:
-        Q: Q statistic
-        df: Degrees of freedom
-        
+    Parameters:
+    Q - Q statistic
+    df - degrees of freedom
+    
     Returns:
-        i_squared: I² statistic
-        i_squared_lower: Lower bound of I² confidence interval
-        i_squared_upper: Upper bound of I² confidence interval
+    I² as percentage (0-100%)
     """
-    i_squared = max(0, (Q - df) / Q * 100) if Q > 0 else 0
-    
-    # Calculate 95% confidence interval for I²
-    # This is an approximate method based on the Q distribution
-    alpha = 0.05
-    q_lower = chi2.ppf(alpha/2, df)
-    q_upper = chi2.ppf(1-alpha/2, df)
-    
-    i_squared_lower = max(0, (Q - q_upper) / Q * 100) if Q > 0 else 0
-    i_squared_upper = max(0, (Q - q_lower) / Q * 100) if Q > 0 else 0
-    
-    return i_squared, i_squared_lower, i_squared_upper
+    if Q <= df:
+        return 0
+    return 100 * (Q - df) / Q
 
-
-def get_random_effects_pooled_stats(p_values, n_values):
-    """
-    Performs a random-effects meta-analysis on proportion data.
+def random_effects_meta(p, n):
+    """Run random-effects meta-analysis on proportion data
     
-    Args:
-        p_values: List or array of proportions
-        n_values: List or array of sample sizes
-        
+    Parameters:
+    p - array of proportions
+    n - array of sample sizes
+    
     Returns:
-        pooled_p: Pooled proportion (back-transformed)
-        pooled_se: Standard error of the pooled estimate
-        lower_ci: Lower bound of the 95% confidence interval
-        upper_ci: Upper bound of the 95% confidence interval
-        tau_squared: Between-study variance
-        i_squared: I² statistic
-        Q: Q statistic for heterogeneity
+    dictionary with meta-analysis results
     """
-    # Convert to numpy arrays for vectorized operations
-    p_values = np.array(p_values)
-    n_values = np.array(n_values)
-    
-    # Calculate logit-transformed proportions
-    logit_p = calculate_logit_transform(p_values)
-    
-    # Calculate within-study variances
-    within_var = calculate_logit_variance(p_values, n_values)
-    
-    # Fixed-effect weights (inverse variance)
-    weights_fixed = 1 / within_var
-    
-    # Calculate Q statistic for heterogeneity
-    Q, df, p_q = calculate_Q(logit_p, weights_fixed)
-    
-    # Calculate between-study variance (τ²)
-    tau_squared = calculate_tau_squared(Q, df, weights_fixed)
-    
-    # Calculate I²
-    i_squared, i_lower, i_upper = calculate_i_squared(Q, df)
-    
-    # Calculate random-effects weights
-    weights_random = 1 / (within_var + tau_squared)
-    
-    # Calculate pooled estimate
-    pooled_logit = np.sum(logit_p * weights_random) / np.sum(weights_random)
-    
-    # Calculate standard error for the pooled estimate
-    pooled_se = np.sqrt(1 / np.sum(weights_random))
-    
-    # Calculate confidence interval
-    z = norm.ppf(0.975)  # 95% CI
-    lower_logit = pooled_logit - z * pooled_se
-    upper_logit = pooled_logit + z * pooled_se
-    
-    # Back-transform results
-    pooled_p = back_transform(pooled_logit)
-    lower_ci = back_transform(lower_logit)
-    upper_ci = back_transform(upper_logit)
-    
-    # Sum of sample sizes for reporting
-    n_sum = np.sum(n_values)
-    
-    return pooled_p, round(pooled_se, 4), lower_ci, upper_ci, n_sum, round(i_squared, 2), round(Q, 2)
+    mask = ~np.isnan(p) & ~np.isnan(n) & (n > 0)
+    p, n = p[mask], n[mask]    
+    y = logit_transform(p)
+    v = logit_variance(p, n)
+    w = 1 / v
+    Q, df = calculate_Q(y, w)
+    tau2 = calculate_tau_squared(Q, df, w)
+    I2 = calculate_I_squared(Q, df)
+    w_random = 1 / (v + tau2)
+    pooled_logit = np.sum(y * w_random) / np.sum(w_random)
+    se = np.sqrt(1 / np.sum(w_random))
+    ci = pooled_logit + np.array([-1, 1]) * 1.96 * se
+    results = {
+        'p_hat': float(back_transform(pooled_logit)),
+        'ci_lower': float(back_transform(ci[0])),
+        'ci_upper': float(back_transform(ci[1])),
+        'k': int(len(p)),
+        'n': int(np.sum(n)),
+        'i2': float(I2),
+        'tau2': float(tau2),
+        'Q': float(Q)
+    }
+    return results
 
-
-def process_group(sheet_name, group_name, subgroup_col, proportion_col, results_df):
-    """Process a group of proportions and add results to the results DataFrame"""
-    try:
-        df = pd.read_excel('output/proportions.xlsx', sheet_name=sheet_name)
-    except Exception as e:
-        print(f"Error reading sheet {sheet_name}: {e}")
-        return results_df
+def analyze_dataset(data_path, analysis_type):
+    """Analyze a dataset using random-effects meta-analysis
     
-    # Add total row for the group if needed
-    if len(df) > 0:
-        p = df[proportion_col]
-        n = df['sample_size']
+    Parameters:
+    data_path - path to CSV file with individual study data
+    analysis_type - string identifier for the analysis approach
+    
+    Returns:
+    dictionary with meta-analysis results
+    """
+    print(f"\nRunning meta-analysis for {analysis_type.upper()} dataset:")
+    results = {}
+    data = pd.read_csv(data_path)
+    print(f"  Loaded {len(data)} studies from {data_path}")
+    
+    prop_col = 'proportion' if 'proportion' in data.columns else 'raw_proportion'
+    if prop_col not in data.columns:
+        print(f"  Error: Could not find proportion column in {data_path}")
+        return {}
+    
+    overall_meta = random_effects_meta(data[prop_col].values, data['sample_size'].values)
+    results['overall'] = overall_meta
+    
+    dimensions = []
+    for col in data.columns:
+        if col.endswith('_name') or col in ['year', 'method_type', 'method_position']:
+            dimensions.append(col)
+    
+    # Map dimension columns to their name columns for subgroup analysis
+    dimension_name_mappings = {
+        'journal': 'journal_name',
+        'sample_source': 'sample_source_name',
+        'sample_recruitment': 'sample_recruitment_name',
+        'sample_method': 'sample_method_name',
+        'sample_platform': 'sample_platform_name',
+        'sample_level': 'sample_level_name',
+        'sample_incentive': 'sample_incentive_name',
+        'sample_country': 'sample_country_name',
+        'cr_method': 'cr_method_name',
+        'design_method': 'design_method_name',
+        'design_location': 'design_location_name'
+        # Add other dimensions as needed
+    }
+    
+    for dim in dimensions:
+        dim_results = {}
+        dim_name = dim.replace('_name', '')
         
-        # Only process if we have valid data
-        if len(p) > 0 and not p.isna().all():
-            try:
-                pooled_p, pooled_se, lower_ci, upper_ci, n_sum, i_squared, Q = get_random_effects_pooled_stats(p, n)
-                results_df.loc[len(results_df)] = [
-                    group_name, 'Total', pooled_p, pooled_se, 
-                    lower_ci, upper_ci, n_sum, len(df), i_squared, Q
-                ]
-            except Exception as e:
-                print(f"Error processing {group_name} total: {e}")
-    
-    # Process each subgroup
-    if subgroup_col in df.columns:
-        for subgroup in df[subgroup_col].unique():
-            subset = df[df[subgroup_col] == subgroup]
-            if len(subset) > 0:
-                p = subset[proportion_col]
-                n = subset['sample_size']
+        if data[dim].isna().sum() > len(data) * 0.5:
+            print(f"  Skipping dimension {dim} due to too many missing values")
+            continue
+        
+        values = data[dim].dropna().unique()
+        if len(values) <= 1:
+            print(f"  Skipping dimension {dim} with only {len(values)} unique values")
+            continue
+        
+        print(f"  Analyzing dimension: {dim} ({len(values)} categories)")
+        
+        categories = []
+        for val in values:
+            subset = data[data[dim] == val]
+            if len(subset) < 2:
+                print(f"    Skipping {dim}={val} with only {len(subset)} studies")
+                continue
                 
-                # Only process if we have valid data
-                if len(p) > 0 and not p.isna().all():
-                    try:
-                        pooled_p, pooled_se, lower_ci, upper_ci, n_sum, i_squared, Q = get_random_effects_pooled_stats(p, n)
-                        results_df.loc[len(results_df)] = [
-                            group_name, subgroup, pooled_p, pooled_se, 
-                            lower_ci, upper_ci, n_sum, len(subset), i_squared, Q
-                        ]
-                    except Exception as e:
-                        print(f"Error processing {group_name}, subgroup {subgroup}: {e}")
+            subgroup_meta = random_effects_meta(subset[prop_col].values, subset['sample_size'].values)
+            
+            categories.append({
+                'name': str(val),
+                'p_hat': subgroup_meta['p_hat'],
+                'ci_lower': subgroup_meta['ci_lower'],
+                'ci_upper': subgroup_meta['ci_upper'],
+                'k': subgroup_meta['k'],
+                'n': subgroup_meta['n'],
+                'i2': subgroup_meta['i2'],
+                'tau2': subgroup_meta['tau2'],
+                'Q': subgroup_meta['Q']
+            })
+        
+        dim_results = {
+            'dimension': dim_name,
+            'categories': categories
+        }
+        
+        results[dim_name] = dim_results
     
-    return results_df
+    return results
 
+def save_results(results, output_path):
+    """Save meta-analysis results to JSON file"""
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w') as f:
+        json.dump(results, f, indent=2)
+    print(f"  Saved results to {output_path}")
 
 def main():
-    columns = [
-        'Group', 'Subgroup', 'Pooled Prevalence', 'Pooled Standard Error',
-        'Lower CI', 'Upper CI', 'Pooled Sample Size', 'Number of Studies',
-        'I-squared (%)', 'Q Statistic'
-    ]
-    pooled_results = pd.DataFrame(columns=columns)
+    """Run meta-analyses for primary and secondary approaches"""    
+    print("\nMETA-ANALYSIS OF CARELESS RESPONDING")
+    print("==================================")
     
-    groups = [
-        {'sheet': 'proportions_total', 'name': 'Total', 'col': None, 'prop_col': 'proportions_total'},
-        {'sheet': 'proportions_year', 'name': 'Year', 'col': 'year', 'prop_col': 'proportions_year'},
-        {'sheet': 'proportions_journal', 'name': 'Journal', 'col': 'journal_name', 'prop_col': 'proportions_journal'},
-        {'sheet': 'proportions_sample_source', 'name': 'Sample Source', 'col': 'sample_source_name', 
-         'prop_col': 'proportions_sample_source'},
-        {'sheet': 'proportions_sample_method', 'name': 'Sample Method', 'col': 'sample_method_name', 
-         'prop_col': 'proportions_sample_method'},
-        {'sheet': 'proportions_platform', 'name': 'Sample Platform', 'col': 'sample_platform_name', 
-         'prop_col': 'proportions_platform'},
-        {'sheet': 'proportions_cr_method', 'name': 'Careless Response Method', 'col': 'cr_method_name', 
-         'prop_col': 'proportions_cr_method'},
-        {'sheet': 'proportions_cr_type', 'name': 'Careless Response Type', 'col': 'cr_method_type', 
-         'prop_col': 'proportions_cr_type'}
-    ]
+    # First-Method approach (PRIMARY ANALYSIS)
+    first_method_path = "data/for_meta/first_method_data.csv"
+    results = analyze_dataset(first_method_path, 'first-method')
+    save_results(results, "output/python_results/first_method_results.json")
     
-    proportions_total = pd.read_excel('output/proportions.xlsx', sheet_name='proportions_total')
-    p = proportions_total['proportions_total']
-    n = proportions_total['sample_size']
-    pooled_p, pooled_se, lower_ci, upper_ci, n_sum, i_squared, Q = get_random_effects_pooled_stats(p, n)
-    pooled_results.loc[len(pooled_results)] = [
-        'Overall', '', pooled_p, pooled_se, lower_ci, upper_ci, n_sum, len(proportions_total), i_squared, Q
-    ]
+    # Single-Method approach (SECONDARY ANALYSIS)
+    single_method_path = "data/for_meta/single_method_data.csv"
+    results = analyze_dataset(single_method_path, 'single-method')
+    save_results(results, "output/python_results/single_method_results.json")
     
-    for group in groups[1:]:  # Skip total as we processed it specially
-        pooled_results = process_group(
-            group['sheet'], group['name'], group['col'], group['prop_col'], pooled_results
-        )
+    # Overall meta analysis
+    overall_path = "data/for_meta/overall_data.csv"
+    results = analyze_dataset(overall_path, 'overall')
+    save_results(results, "output/python_results/overall_results.json")
     
-    pooled_results.to_csv('output/random_effects_pooled_proportions.csv', index=False)
-    print("\nRandom Effects Meta-Analysis Summary")
-    print("=====================================")
-    print(f"Overall pooled prevalence: {pooled_p:.4f} (95% CI: {lower_ci:.4f}-{upper_ci:.4f})")
-    print(f"I-squared: {i_squared:.1f}% (Overall heterogeneity)")
-    print(f"Q statistic: {Q:.2f}, p < 0.001 (assuming df > 10)")
-    
-if __name__ == '__main__':
+    print("\nMeta-analysis complete.")
+if __name__ == "__main__":
     main()

@@ -137,7 +137,7 @@ def main():
     print("\nResults Summary:")
     results = results.sort_values('Reliability', ascending=False)
     print(results)
-    results.to_csv('output/reliability_results.csv', index=False)
+    results.to_csv('output/python_results/reliability_results.csv', index=False)
 
 if __name__ == "__main__":
     main()

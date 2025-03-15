@@ -75,7 +75,7 @@ def main():
         print(df)
         print()
 
-    with pd.ExcelWriter('output/frequencies.xlsx') as writer:
+    with pd.ExcelWriter('output/python_results/counts.xlsx') as writer:
         for variable, df in dfs.items():
             df.to_excel(writer, sheet_name=variable, index=False)
             

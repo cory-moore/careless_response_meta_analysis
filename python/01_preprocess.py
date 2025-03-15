@@ -437,6 +437,61 @@ def create_sequential_dataset(df):
     
     return method_pos_df
 
+def create_overall_dataset(df):
+    """
+    Create dataset including all studies, using the total CR amount.
+    This captures all available data regardless of method configuration
+    (single method, sequential, non-sequential).
+    
+    Returns:
+    --------
+    pandas.DataFrame
+        Complete dataset with total CR proportions
+    """
+    print("\nCREATING OVERALL DATASET:")
+    total_studies = len(df)
+    unique_studies = df['ID'].nunique()
+    print(f"  Including all {unique_studies} unique studies")
+    
+    # Count studies by category for reporting
+    single_method_count = df[df['cr_multiple'] == 0]['ID'].nunique()
+    multi_sequential_count = df[(df['cr_multiple'] == 1) & (df['cr_sequential'] == 1)]['ID'].nunique()
+    multi_nonsequential_count = df[(df['cr_multiple'] == 1) & (df['cr_sequential'] == 0)]['ID'].nunique()
+    other_count = unique_studies - single_method_count - multi_sequential_count - multi_nonsequential_count
+    
+    print(f"  Study composition:")
+    print(f"    Single-method studies: {single_method_count} ({round(single_method_count/unique_studies*100, 1)}%)")
+    print(f"    Sequential multiple-method studies: {multi_sequential_count} ({round(multi_sequential_count/unique_studies*100, 1)}%)")
+    print(f"    Non-sequential multiple-method studies: {multi_nonsequential_count} ({round(multi_nonsequential_count/unique_studies*100, 1)}%)")
+    if other_count > 0:
+        print(f"    Other studies: {other_count} ({round(other_count/unique_studies*100, 1)}%)")
+    
+    # Create a copy of the dataset for modification
+    overall_data = df.copy()
+    
+    # For non-sequential multiple method studies, ensure we're using cr_total_amount
+    nonseq_multiple = (overall_data['cr_multiple'] == 1) & (overall_data['cr_sequential'] == 0)
+    if sum(nonseq_multiple) > 0:
+        # Verify cr_total_amount is populated for these studies
+        missing_total = sum((nonseq_multiple) & (overall_data['cr_total_amount'] == -1))
+        if missing_total > 0:
+            print(f"  Warning: {missing_total} non-sequential studies are missing cr_total_amount")
+    
+    # Calculate proportion for all studies using cr_total_amount
+    overall_data['cr_amount'] = overall_data['cr_total_amount']
+    overall_data['proportion'] = overall_data['cr_amount'] / overall_data['sample_size']
+    
+    # Report on the range of proportions
+    print(f"  Careless responding proportions:")
+    print(f"    Mean: {round(overall_data['proportion'].mean(), 4)}")
+    print(f"    Median: {round(overall_data['proportion'].median(), 4)}")
+    print(f"    Range: {round(overall_data['proportion'].min(), 4)} to {round(overall_data['proportion'].max(), 4)}")
+    
+    # Add a column indicating the dataset approach
+    overall_data['analysis_approach'] = 'overall'
+    
+    return overall_data
+
 def process_meta_data(df, diagnostics=None):
     """Process meta-analysis dataset: run checks and clean data."""
     print("\n== META-ANALYSIS DATA PROCESSING ==")
@@ -478,16 +533,22 @@ def process_data(data_path):
     first_method_data = create_first_method_dataset(position_data)
     single_method_data = create_single_method_dataset(position_data)
     sequential_data = create_sequential_dataset(position_data)
+    overall_data = create_overall_dataset(position_data)  # Add this line
     
     first_method_data.to_csv("data/processed/first_method_data.csv", index=False)
     single_method_data.to_csv("data/processed/single_method_data.csv", index=False)
+    overall_data.to_csv("data/processed/overall_data.csv", index=False) 
     
     if len(sequential_data) > 0:
         sequential_data.to_csv("data/processed/sequential_data.csv", index=False)
     
     print("\nAll datasets saved to data/processed/")
+    print("  - first_method_data.csv: Primary analysis dataset (First-Method approach)")
+    print("  - single_method_data.csv: Secondary analysis dataset (Single-Method only)")
+    print("  - sequential_data.csv: Positional effects analysis dataset")
+    print("  - overall_data.csv: Complete dataset using total CR amounts")  # Add this line
     
-    return cleaned_data, first_method_data, single_method_data, sequential_data
+    return cleaned_data, first_method_data, single_method_data, sequential_data, overall_data
 
 def main():
     data_path = "data/coded_study_data_all.xlsx"
