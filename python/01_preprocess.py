@@ -278,6 +278,47 @@ def calculate_remaining_sample(df):
     
     return result_df
 
+def clean_count_variables(df, count_vars=None, id_var='ID'):
+    """
+    Clean count variables by handling -1 values and invalid entries.
+    
+    This function performs several data cleaning steps:
+    1. Replaces -1 values with NaN in specified count variables
+    2. Removes rows with invalid values (non-positive sample sizes or missing counts)
+    3. Reports on any data removed during cleaning
+    """
+    if count_vars is None:
+        count_vars = ['cr_amount', 'sample_size']
+    
+    cleaned_df = df.copy()
+    initial_count = len(cleaned_df)
+    initial_studies = cleaned_df[id_var].nunique()
+    
+    # Replace -1 with NaN in count variables
+    for var in count_vars:
+        if var in cleaned_df.columns:
+            invalid_count = (cleaned_df[var] == -1).sum()
+            if invalid_count > 0:
+                print(f"    Converting {invalid_count} '-1' values to NaN in {var}")
+                cleaned_df[var] = cleaned_df[var].replace(-1, np.nan)
+    
+    # Remove invalid entries
+    if 'sample_size' in count_vars and 'sample_size' in cleaned_df.columns:
+        cleaned_df = cleaned_df[cleaned_df['sample_size'] > 0].copy()
+    
+    for var in count_vars:
+        if var in cleaned_df.columns and var != 'sample_size':
+            cleaned_df = cleaned_df[~cleaned_df[var].isna()].copy()
+    
+    # Report changes
+    removed_rows = initial_count - len(cleaned_df)
+    removed_studies = initial_studies - cleaned_df[id_var].nunique()
+    
+    if removed_rows > 0:
+        print(f"    Removed {removed_rows} rows ({removed_studies} unique studies) with invalid values")
+    
+    return cleaned_df
+
 def create_first_method_dataset(df):
     """Create dataset following the First-Method approach."""
     print("\nCREATING FIRST-METHOD DATASET:")
@@ -307,13 +348,21 @@ def create_first_method_dataset(df):
     single_method = (first_method_data['cr_multiple'] == 0)
     
     first_method_data['cr_method'] = np.where(single_method, first_method_data['cr_1_method'], first_method_data['cr_1_method'])
-    first_method_data['cr_amount'] = np.where(single_method,first_method_data['cr_1_amount'],first_method_data['cr_1_amount'])
+    first_method_data['cr_amount'] = np.where(single_method, first_method_data['cr_1_amount'], first_method_data['cr_1_amount'])
     first_method_data['cr_position'] = 1
-    first_method_data['proportion'] = first_method_data['cr_amount'] / first_method_data['sample_size']
+    first_method_data = clean_count_variables(first_method_data, count_vars=['cr_amount', 'sample_size'])
+    first_method_data['proportion'] = np.clip(first_method_data['cr_amount'] / first_method_data['sample_size'], 0, 1)
+    
+    problematic = first_method_data[
+        (first_method_data['proportion'] < 0) | 
+        (first_method_data['proportion'] > 1)]
+    if len(problematic) > 0:
+        print("    WARNING: Problematic proportion calculations found:")
+        print(problematic[['ID', 'cr_amount', 'sample_size', 'proportion']])
     
     final_unique_studies = first_method_data['ID'].nunique()
     print(f"  First-Method dataset: {final_unique_studies} studies "
-          f"({single_method_count} single-method, {multi_sequential_count} sequential first methods)")
+          f"({sum(single_method)} single-method, {sum(multi_method)} sequential first methods)")
     
     return first_method_data
 
@@ -332,12 +381,15 @@ def create_single_method_dataset(df):
     single_method_data['cr_method'] = single_method_data['cr_1_method']
     single_method_data['cr_amount'] = single_method_data['cr_1_amount']
     single_method_data['cr_position'] = 1
-    single_method_data['proportion'] = single_method_data['cr_amount'] / single_method_data['sample_size']
+    
+    single_method_data = clean_count_variables(single_method_data, count_vars=['cr_amount', 'sample_size'])
+    
+    single_method_data['proportion'] = np.clip(single_method_data['cr_amount'] / single_method_data['sample_size'], 0, 1)
     
     excluded = unique_studies - single_method_count
     print(f"  Starting with {unique_studies} unique studies")
     print(f"  Excluded {excluded} studies ({multi_sequential_count} sequential, {multi_nonsequential_count} non-sequential)")
-    print(f"  Final dataset: {single_method_count} single-method studies")
+    print(f"  Final dataset: {single_method_data['ID'].nunique()} single-method studies")
     
     return single_method_data
 
@@ -361,6 +413,8 @@ def create_sequential_dataset(df):
         print("  No sequential screening studies found")
         return pd.DataFrame()
     
+    sequential_data = clean_count_variables(sequential_data, count_vars=['sample_size', 'cr_1_amount', 'cr_2_amount', 'cr_3_amount', 'cr_4_amount'])
+    
     method_positions = []
     
     for _, row in sequential_data.iterrows():
@@ -372,11 +426,11 @@ def create_sequential_dataset(df):
             'method_code': row['cr_1_method'],
             'cr_amount': row['cr_1_amount'],
             'remaining_sample': row['remaining_sample_1'],
-            'raw_proportion': row['cr_1_amount'] / row['sample_size'],
-            'adjusted_proportion': row['cr_1_amount'] / row['remaining_sample_1']
+            'raw_proportion': np.clip(row['cr_1_amount'] / row['sample_size'], 0, 1),
+            'adjusted_proportion': np.clip(row['cr_1_amount'] / row['remaining_sample_1'], 0, 1)
         })
         
-        if row['cr_2_method'] != -1 and not pd.isna(row['cr_2_method']):
+        if row['cr_2_method'] != -1 and not pd.isna(row['cr_2_method']) and not pd.isna(row['cr_2_amount']):
             method_positions.append({
                 'ID': row['ID'],
                 'title': row['title'],
@@ -385,11 +439,11 @@ def create_sequential_dataset(df):
                 'method_code': row['cr_2_method'],
                 'cr_amount': row['cr_2_amount'],
                 'remaining_sample': row['remaining_sample_2'],
-                'raw_proportion': row['cr_2_amount'] / row['sample_size'],
-                'adjusted_proportion': row['cr_2_amount'] / row['remaining_sample_2']
+                'raw_proportion': np.clip(row['cr_2_amount'] / row['sample_size'], 0, 1),
+                'adjusted_proportion': np.clip(row['cr_2_amount'] / row['remaining_sample_2'], 0, 1)
             })
         
-        if row['cr_3_method'] != -1 and not pd.isna(row['cr_3_method']):
+        if row['cr_3_method'] != -1 and not pd.isna(row['cr_3_method']) and not pd.isna(row['cr_3_amount']):
             method_positions.append({
                 'ID': row['ID'],
                 'title': row['title'],
@@ -398,11 +452,11 @@ def create_sequential_dataset(df):
                 'method_code': row['cr_3_method'],
                 'cr_amount': row['cr_3_amount'],
                 'remaining_sample': row['remaining_sample_3'],
-                'raw_proportion': row['cr_3_amount'] / row['sample_size'],
-                'adjusted_proportion': row['cr_3_amount'] / row['remaining_sample_3']
+                'raw_proportion': np.clip(row['cr_3_amount'] / row['sample_size'], 0, 1),
+                'adjusted_proportion': np.clip(row['cr_3_amount'] / row['remaining_sample_3'], 0, 1)
             })
         
-        if row['cr_4_method'] != -1 and not pd.isna(row['cr_4_method']):
+        if row['cr_4_method'] != -1 and not pd.isna(row['cr_4_method']) and not pd.isna(row['cr_4_amount']):
             method_positions.append({
                 'ID': row['ID'],
                 'title': row['title'],
@@ -411,8 +465,8 @@ def create_sequential_dataset(df):
                 'method_code': row['cr_4_method'],
                 'cr_amount': row['cr_4_amount'],
                 'remaining_sample': row['remaining_sample_4'],
-                'raw_proportion': row['cr_4_amount'] / row['sample_size'],
-                'adjusted_proportion': row['cr_4_amount'] / row['remaining_sample_4']
+                'raw_proportion': np.clip(row['cr_4_amount'] / row['sample_size'], 0, 1),
+                'adjusted_proportion': np.clip(row['cr_4_amount'] / row['remaining_sample_4'], 0, 1)
             })
     
     method_pos_df = pd.DataFrame(method_positions)
@@ -453,7 +507,6 @@ def create_overall_dataset(df):
     unique_studies = df['ID'].nunique()
     print(f"  Including all {unique_studies} unique studies")
     
-    # Count studies by category for reporting
     single_method_count = df[df['cr_multiple'] == 0]['ID'].nunique()
     multi_sequential_count = df[(df['cr_multiple'] == 1) & (df['cr_sequential'] == 1)]['ID'].nunique()
     multi_nonsequential_count = df[(df['cr_multiple'] == 1) & (df['cr_sequential'] == 0)]['ID'].nunique()
@@ -466,28 +519,18 @@ def create_overall_dataset(df):
     if other_count > 0:
         print(f"    Other studies: {other_count} ({round(other_count/unique_studies*100, 1)}%)")
     
-    # Create a copy of the dataset for modification
     overall_data = df.copy()
     
-    # For non-sequential multiple method studies, ensure we're using cr_total_amount
-    nonseq_multiple = (overall_data['cr_multiple'] == 1) & (overall_data['cr_sequential'] == 0)
-    if sum(nonseq_multiple) > 0:
-        # Verify cr_total_amount is populated for these studies
-        missing_total = sum((nonseq_multiple) & (overall_data['cr_total_amount'] == -1))
-        if missing_total > 0:
-            print(f"  Warning: {missing_total} non-sequential studies are missing cr_total_amount")
+    overall_data = clean_count_variables(overall_data, count_vars=['cr_total_amount', 'sample_size'])
     
-    # Calculate proportion for all studies using cr_total_amount
     overall_data['cr_amount'] = overall_data['cr_total_amount']
-    overall_data['proportion'] = overall_data['cr_amount'] / overall_data['sample_size']
+    overall_data['proportion'] = np.clip(overall_data['cr_amount'] / overall_data['sample_size'], 0, 1)
     
-    # Report on the range of proportions
     print(f"  Careless responding proportions:")
     print(f"    Mean: {round(overall_data['proportion'].mean(), 4)}")
     print(f"    Median: {round(overall_data['proportion'].median(), 4)}")
     print(f"    Range: {round(overall_data['proportion'].min(), 4)} to {round(overall_data['proportion'].max(), 4)}")
     
-    # Add a column indicating the dataset approach
     overall_data['analysis_approach'] = 'overall'
     
     return overall_data
