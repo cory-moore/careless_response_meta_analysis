@@ -17,136 +17,114 @@
 
 library(tidyverse)
 library(metafor)
+library(glue)
 
 first_method_data <- read_csv("data/for_r_meta/first_method_data.csv", show_col_types = FALSE)
-cat(glue::glue("Loaded First-Method dataset: {nrow(first_method_data)} studies\n"))
+cat(glue("Loaded First-Method dataset: {nrow(first_method_data)} studies\n"))
+
+load_codebook <- \(path = "codebook.json") jsonlite::read_json(path)
 
 run_meta_analysis <- function(data, method = "DL") {
-  # Random-effects meta-analysis using metafor
-  meta_result <- rma(yi = logit_prop, 
-                    vi = var_logit, 
-                    data = data, 
-                    method = method)
-  
-  # Back-transform to proportion scale
-  pooled_prop <- transf.ilogit(meta_result$b)
-  ci_lb <- transf.ilogit(meta_result$ci.lb)
-  ci_ub <- transf.ilogit(meta_result$ci.ub)
-  
-  return(list(
-    pooled_prop = pooled_prop,
-    ci_lb = ci_lb,
-    ci_ub = ci_ub,
-    k = meta_result$k,
-    n = sum(data$sample_size, na.rm = TRUE),
-    tau2 = meta_result$tau2,
-    i2 = meta_result$I2,
-    h2 = meta_result$H2,
-    q = meta_result$QE,
-    p_q = meta_result$QEp
-  ))
+  result <- rma(yi = logit_prop, vi = var_logit, data = data, method = method)
+  list(
+    pooled_prop = as.numeric(transf.ilogit(result$b)),
+    ci_lb = as.numeric(transf.ilogit(result$ci.lb)), 
+    ci_ub = as.numeric(transf.ilogit(result$ci.ub)),
+    k = as.integer(result$k), 
+    n = as.integer(sum(data$sample_size, na.rm = TRUE)),
+    tau2 = as.numeric(result$tau2), 
+    i2 = as.numeric(result$I2), 
+    h2 = as.numeric(result$H2), 
+    q = as.numeric(result$QE), 
+    p_q = as.numeric(result$QEp)
+  )
 }
 
-run_subgroup_analysis <- function(data, grouping_var) {
-  unique_values <- data %>% 
-    pull(!!sym(grouping_var)) %>% 
+run_subgroup_analysis <- function(data, var, codebook = NULL) {
+  if (is.null(codebook)) codebook <- load_codebook()
+  unique_vals <- data %>% 
+    pull(!!sym(var)) %>% 
     unique() %>% 
     na.omit()
+  cat(glue("  Running subgroup analysis for {var} with {length(unique_vals)} levels\n"))
   
-  cat(glue::glue("  Running subgroup analysis for {grouping_var} with {length(unique_values)} levels\n"))
+  base_var <- if(str_ends(var, "_name")) str_replace(var, "_name$", "") else var
+  mapping <- if(base_var %in% names(codebook)) codebook[[base_var]] else NULL
   
-  results_list <- list()
-  
-  for (val in unique_values) {
-    subset_data <- data %>% filter(!!sym(grouping_var) == val)
+  results <- map(unique_vals, function(val) {
+    subset <- data %>% 
+      filter(!!sym(var) == val)
+    if (nrow(subset) < 2) {
+      cat(glue("    Skipping {var} = {val} with only {nrow(subset)} studies\n"))
+      return(NULL)
+    }
+    cat(glue("    Analyzing {var} = {val} with {nrow(subset)} studies\n"))
     
-    if (nrow(subset_data) < 2) {
-      cat(glue::glue("    Skipping {grouping_var} = {val} with only {nrow(subset_data)} studies\n"))
-      next
+    display_name <- val
+    if (!is.null(mapping) && (is.numeric(val) || val == "-1" || 
+        (is.character(val) && grepl("^-?\\d+$", val)))) {
+      val_str <- as.character(val)
+      if (val_str %in% names(mapping)) display_name <- mapping[[val_str]]
     }
     
-    cat(glue::glue("    Analyzing {grouping_var} = {val} with {nrow(subset_data)} studies\n"))
-    
-    meta_results <- run_meta_analysis(subset_data)
-    
-    results_list[[length(results_list) + 1]] <- tibble(
-      Subgroup = as.character(val),
-      Pooled_Proportion = as.numeric(meta_results$pooled_prop),
-      CI_Lower = as.numeric(meta_results$ci_lb),
-      CI_Upper = as.numeric(meta_results$ci_ub),
-      k = as.integer(meta_results$k),
-      N = as.integer(meta_results$n),
-      tau2 = as.numeric(meta_results$tau2),
-      I2 = as.numeric(meta_results$i2),
-      H2 = as.numeric(meta_results$h2),
-      Q = as.numeric(meta_results$q),
-      p_Q = as.numeric(meta_results$p_q)
+    meta <- run_meta_analysis(subset)
+    tibble(
+      Subgroup = as.character(display_name),
+      Pooled_Proportion = meta$pooled_prop, CI_Lower = meta$ci_lb, CI_Upper = meta$ci_ub,
+      k = meta$k, N = meta$n, tau2 = meta$tau2, I2 = meta$i2, H2 = meta$h2, 
+      Q = meta$q, p_Q = meta$p_q
     )
-  }
+  }) %>% 
+    compact()
   
-  if (length(results_list) > 0) {
-    return(bind_rows(results_list) %>% arrange(desc(k)))
+  if (length(results) > 0) {
+    bind_rows(results) %>% 
+      arrange(desc(k))
   } else {
-    return(tibble(
-      Subgroup = character(),
-      Pooled_Proportion = numeric(),
-      CI_Lower = numeric(),
-      CI_Upper = numeric(),
-      k = integer(),
-      N = integer(),
-      tau2 = numeric(),
-      I2 = numeric(),
-      H2 = numeric(),
-      Q = numeric(),
-      p_Q = numeric()
-    ))
+    tibble(Subgroup = character(), Pooled_Proportion = numeric(), 
+           CI_Lower = numeric(), CI_Upper = numeric(), k = integer())
   }
 }
 
+# Run overall meta-analysis
 cat("\nRUNNING PRIMARY META-ANALYSIS (FIRST-METHOD APPROACH):\n")
-cat("------------------------------------------------\n")
 overall_results <- run_meta_analysis(first_method_data)
 
 cat("\nOverall Results (First-Method Approach):\n")
-cat(glue::glue("  Pooled Proportion: {round(overall_results$pooled_prop * 100, 2)}% (95% CI: {round(overall_results$ci_lb * 100, 2)}%-{round(overall_results$ci_ub * 100, 2)}%)\n"))
-cat(glue::glue("  Based on {overall_results$k} studies with {overall_results$n} participants\n"))
-cat(glue::glue("  Heterogeneity: I² = {round(overall_results$i2, 1)}%, Q = {round(overall_results$q, 2)} (p{ifelse(overall_results$p_q < 0.001, '< 0.001', paste0('= ', round(overall_results$p_q, 3)))})\n"))
+cat(glue("  Pooled Proportion: {round(overall_results$pooled_prop * 100, 2)}% (95% CI: {round(overall_results$ci_lb * 100, 2)}%-{round(overall_results$ci_ub * 100, 2)}%)\n"))
+cat(glue("  Based on {overall_results$k} studies with {overall_results$n} participants\n"))
+cat(glue("  Heterogeneity: I² = {round(overall_results$i2, 1)}%, Q = {round(overall_results$q, 2)} (p{ifelse(overall_results$p_q < 0.001, '< 0.001', paste0('= ', round(overall_results$p_q, 3)))})\n"))
 
-# Create the overall results dataframe with only atomic columns
-overall_results_df <- tibble(
+# Save overall results
+tibble(
   Analysis = "First-Method",
-  Pooled_Proportion = as.numeric(overall_results$pooled_prop),
-  CI_Lower = as.numeric(overall_results$ci_lb),
-  CI_Upper = as.numeric(overall_results$ci_ub),
-  k = as.integer(overall_results$k),
-  N = as.integer(overall_results$n),
-  tau2 = as.numeric(overall_results$tau2),
-  I2 = as.numeric(overall_results$i2),
-  H2 = as.numeric(overall_results$h2),
-  Q = as.numeric(overall_results$q),
-  p_Q = as.numeric(overall_results$p_q)
-)
+  Pooled_Proportion = overall_results$pooled_prop, CI_Lower = overall_results$ci_lb,
+  CI_Upper = overall_results$ci_ub, k = overall_results$k, N = overall_results$n,
+  tau2 = overall_results$tau2, I2 = overall_results$i2, H2 = overall_results$h2,
+  Q = overall_results$q, p_Q = overall_results$p_q
+) %>% 
+  write_csv("output/r_results/primary/overall_results.csv")
 
-write_csv(overall_results_df, "output/r_results/primary/overall_results.csv")
-
+# Define and run subgroup analyses
 cat("\nRunning subgroup analyses...\n")
-subgroup_variables <- c(
-  "method_type", 
-  "sample_source_name", 
-  "sample_platform_name", 
-  "sample_method_name",
-  "journal_name"
-)
+codebook <- load_codebook()
 
-subgroup_results <- subgroup_variables %>%
-  set_names() %>%
-  map(~{
-    cat(glue::glue("\nAnalyzing by {.x}:\n"))
-    results <- run_subgroup_analysis(first_method_data, .x)
-    write_csv(results, glue::glue("output/r_results/primary/subgroup_{.x}.csv"))
-    results
-  })
+subgroup_variables <- c("method_type", "sample_source", "sample_recruitment", 
+                        "sample_platform", "sample_method", "journal", "sample_level", 
+                        "sample_incentive", "sample_country", "design_method", 
+                        "design_location")
 
+walk(subgroup_variables, ~{
+  if (.x %in% colnames(first_method_data)) {
+    cat(glue("\nAnalyzing by {.x}:\n"))
+    results <- run_subgroup_analysis(first_method_data, .x, codebook)
+    write_csv(results, glue("output/r_results/primary/subgroup_{.x}.csv"))
+  } else {
+    cat(glue("Skipping {.x} - not found in dataset\n"))
+  }
+})
+
+# Run temporal trends analysis
 cat("\nAnalyzing temporal trends...\n")
 year_results <- run_subgroup_analysis(first_method_data, "year")
 write_csv(year_results, "output/r_results/primary/temporal_trends.csv")
