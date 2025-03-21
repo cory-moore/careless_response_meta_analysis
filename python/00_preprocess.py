@@ -415,13 +415,27 @@ def create_sequential_dataset(df):
     
     sequential_data = clean_count_variables(sequential_data, count_vars=['sample_size', 'cr_1_amount', 'cr_2_amount', 'cr_3_amount', 'cr_4_amount'])
     
+    # Define sample columns to preserve
+    sample_columns = [
+        'ID', 'title', 'year', 'authors', 'journal',
+        'sample_size', 'sample_source', 'sample_recruitment', 
+        'sample_platform', 'sample_method', 'sample_level',
+        'sample_incentive', 'sample_country', 
+        'design_method', 'design_location'
+    ]
+    
+    # Only keep columns that actually exist in the dataframe
+    sample_columns = [col for col in sample_columns if col in sequential_data.columns]
+    
     method_positions = []
     
     for _, row in sequential_data.iterrows():
-        method_positions.append({
-            'ID': row['ID'],
-            'title': row['title'],
-            'sample_size': row['sample_size'],
+        # Get all sample characteristics to preserve
+        sample_info = {col: row[col] for col in sample_columns if col in row}
+        
+        # Position 1
+        pos1_data = sample_info.copy()
+        pos1_data.update({
             'method_position': 1,
             'method_code': row['cr_1_method'],
             'cr_amount': row['cr_1_amount'],
@@ -429,12 +443,12 @@ def create_sequential_dataset(df):
             'raw_proportion': np.clip(row['cr_1_amount'] / row['sample_size'], 0, 1),
             'adjusted_proportion': np.clip(row['cr_1_amount'] / row['remaining_sample_1'], 0, 1)
         })
+        method_positions.append(pos1_data)
         
+        # Position 2
         if row['cr_2_method'] != -1 and not pd.isna(row['cr_2_method']) and not pd.isna(row['cr_2_amount']):
-            method_positions.append({
-                'ID': row['ID'],
-                'title': row['title'],
-                'sample_size': row['sample_size'],
+            pos2_data = sample_info.copy()
+            pos2_data.update({
                 'method_position': 2,
                 'method_code': row['cr_2_method'],
                 'cr_amount': row['cr_2_amount'],
@@ -442,12 +456,12 @@ def create_sequential_dataset(df):
                 'raw_proportion': np.clip(row['cr_2_amount'] / row['sample_size'], 0, 1),
                 'adjusted_proportion': np.clip(row['cr_2_amount'] / row['remaining_sample_2'], 0, 1)
             })
+            method_positions.append(pos2_data)
         
+        # Position 3
         if row['cr_3_method'] != -1 and not pd.isna(row['cr_3_method']) and not pd.isna(row['cr_3_amount']):
-            method_positions.append({
-                'ID': row['ID'],
-                'title': row['title'],
-                'sample_size': row['sample_size'],
+            pos3_data = sample_info.copy()
+            pos3_data.update({
                 'method_position': 3,
                 'method_code': row['cr_3_method'],
                 'cr_amount': row['cr_3_amount'],
@@ -455,12 +469,12 @@ def create_sequential_dataset(df):
                 'raw_proportion': np.clip(row['cr_3_amount'] / row['sample_size'], 0, 1),
                 'adjusted_proportion': np.clip(row['cr_3_amount'] / row['remaining_sample_3'], 0, 1)
             })
+            method_positions.append(pos3_data)
         
+        # Position 4
         if row['cr_4_method'] != -1 and not pd.isna(row['cr_4_method']) and not pd.isna(row['cr_4_amount']):
-            method_positions.append({
-                'ID': row['ID'],
-                'title': row['title'],
-                'sample_size': row['sample_size'],
+            pos4_data = sample_info.copy()
+            pos4_data.update({
                 'method_position': 4,
                 'method_code': row['cr_4_method'],
                 'cr_amount': row['cr_4_amount'],
@@ -468,20 +482,23 @@ def create_sequential_dataset(df):
                 'raw_proportion': np.clip(row['cr_4_amount'] / row['sample_size'], 0, 1),
                 'adjusted_proportion': np.clip(row['cr_4_amount'] / row['remaining_sample_4'], 0, 1)
             })
+            method_positions.append(pos4_data)
     
     method_pos_df = pd.DataFrame(method_positions)
     
-    method_pos_df['method_name'] = method_pos_df['method_code'].map(
-        {int(k): v for k, v in codebook['cr_method'].items()}
-    )
-    
-    def get_method_type(method_code):
-        for type_name, methods in codebook['cr_method_type'].items():
-            if method_code in methods:
-                return type_name
-        return "other"
-    
-    method_pos_df['method_type'] = method_pos_df['method_code'].apply(get_method_type)
+    # Add method name and method type
+    if 'method_code' in method_pos_df.columns:
+        method_pos_df['method_name'] = method_pos_df['method_code'].map(
+            {int(k): v for k, v in codebook['cr_method'].items()}
+        )
+        
+        def get_method_type(method_code):
+            for type_name, methods in codebook['cr_method_type'].items():
+                if method_code in methods:
+                    return type_name
+            return "other"
+        
+        method_pos_df['method_type'] = method_pos_df['method_code'].apply(get_method_type)
     
     method_position_count = len(method_pos_df)
     pos_counts = method_pos_df['method_position'].value_counts().sort_index()
