@@ -1,13 +1,6 @@
-# Python virtual environment
 venv/
-
-# Output directory
 output/
-
-# Data directory
 data/
-
-# Python cache files
 __pycache__/
 *.py[cod]
 *$py.class

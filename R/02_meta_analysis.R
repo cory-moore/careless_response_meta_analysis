@@ -43,11 +43,9 @@ approaches <- list(
   )
 )
 
-# Helper function to load codebook
 load_codebook <- \(path = "codebook.json") jsonlite::read_json(path)
 
-# Meta-analysis function
-run_meta_analysis <- function(data, method = "DL") {
+run_meta_analysis <- function(data, method = "REML") {
   result <- rma(yi = logit_prop, vi = var_logit, data = data, method = method)
   list(
     pooled_prop = as.numeric(transf.ilogit(result$b)),
@@ -63,7 +61,6 @@ run_meta_analysis <- function(data, method = "DL") {
   )
 }
 
-# Subgroup analysis function
 run_subgroup_analysis <- function(data, var, codebook = NULL) {
   if (is.null(codebook)) codebook <- load_codebook()
   
@@ -107,23 +104,17 @@ run_subgroup_analysis <- function(data, var, codebook = NULL) {
 process_approach <- function(approach_params) {
   cat("\nPROCESSING", approach_params$name, "APPROACH:\n")
   cat(approach_params$description, "\n")
-  
-  # Create output directory
   dir.create(approach_params$output_dir, recursive = TRUE, showWarnings = FALSE)
   
-  # Load data
   data <- read_csv(approach_params$data_path, show_col_types = FALSE)
   cat(glue("  Loaded {nrow(data)} studies with {sum(data$sample_size)} participants\n"))
   
-  # Run overall meta-analysis
   overall_results <- run_meta_analysis(data)
-  
   cat("\nOverall Results:\n")
   cat(glue("  Pooled Proportion: {round(overall_results$pooled_prop * 100, 2)}% (95% CI: {round(overall_results$ci_lb * 100, 2)}%-{round(overall_results$ci_ub * 100, 2)}%)\n"))
   cat(glue("  Based on {overall_results$k} studies with {overall_results$n} participants\n"))
   cat(glue("  Heterogeneity: I² = {round(overall_results$i2, 1)}%, Q = {round(overall_results$q, 2)} (p{ifelse(overall_results$p_q < 0.001, '< 0.001', paste0('= ', round(overall_results$p_q, 3)))})\n"))
   
-  # Save overall results
   tibble(
     Analysis = approach_params$name,
     Pooled_Proportion = overall_results$pooled_prop, CI_Lower = overall_results$ci_lb,
@@ -132,20 +123,17 @@ process_approach <- function(approach_params) {
     Q = overall_results$q, p_Q = overall_results$p_q
   ) %>% write_csv(file.path(approach_params$output_dir, "overall_results.csv"))
   
-  # Define subgroup variables
   method_vars <- c("method_type", "cr_method")
   sample_vars <- c("sample_source", "sample_recruitment", "sample_platform", "sample_method",
                   "journal", "sample_level", "sample_incentive", "sample_country", 
                   "design_method", "design_location")
   
-  # Set subgroup variables based on approach
   subgroup_vars <- if(approach_params$include_method_subgroups) {
     c(method_vars, sample_vars)
   } else {
     sample_vars
   }
   
-  # Run subgroup analyses
   cat("\nRunning subgroup analyses...\n")
   codebook <- load_codebook()
   
@@ -157,14 +145,12 @@ process_approach <- function(approach_params) {
     }
   })
   
-  # Run temporal trends analysis
   cat("\nAnalyzing temporal trends...\n")
   year_results <- run_subgroup_analysis(data, "year")
   write_csv(year_results, file.path(approach_params$output_dir, "temporal_trends.csv"))
   
   cat(glue("\n{approach_params$name} analysis complete. Results saved to {approach_params$output_dir}/\n"))
   
-  # Return key results for potential further analysis
   return(list(
     name = approach_params$name,
     overall = overall_results,
@@ -172,8 +158,6 @@ process_approach <- function(approach_params) {
   ))
 }
 
-# Process all approaches and collect results
 results <- map(approaches, process_approach)
 
-# Create comparison report if needed (similar to current 05_compare_metas.R)
 cat("\nAll meta-analyses complete!\n")
