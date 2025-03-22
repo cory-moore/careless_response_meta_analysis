@@ -36,6 +36,77 @@ ggplot(method_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
 ggsave("output/figures/method_type_forest_plot.png", width = 10, height = 7, dpi = 300)  
 
 ##############################################
+# Forest Plot of Method Timing (A Priori vs. Post Hoc)
+##############################################
+timing_results <- read.csv("output/r_results/primary/subgroup_method_timing.csv")
+timing_results <- timing_results %>% arrange(desc(Pooled_Proportion))
+
+ggplot(timing_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
+  geom_point(aes(x = Pooled_Proportion), size = 3) +
+  geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+  labs(
+    title = "Careless Responding Rates by Detection Method Timing",
+    subtitle = "First-Method Approach (PRIMARY)",
+    x = "Proportion of Careless Responses",
+    y = "Detection Method Timing"
+  ) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  annotate("text", x = max(timing_results$CI_Upper) * 1.1, 
+           y = 1:nrow(timing_results), 
+           label = paste0("k=", timing_results$k), 
+           hjust = 0) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.y = element_text(face = "bold"),
+    panel.background = element_rect(fill = "white")
+  ) +
+  coord_cartesian(clip = "off") +
+  theme(plot.margin = margin(10, 100, 10, 10))
+
+ggsave("output/figures/method_timing_forest_plot.png", width = 10, height = 5, dpi = 300)
+
+# Add combination plot comparing method type and method timing
+if(file.exists("output/r_results/primary/subgroup_method_type.csv") && 
+   file.exists("output/r_results/primary/subgroup_method_timing.csv")) {
+   
+  type_results <- read.csv("output/r_results/primary/subgroup_method_type.csv")
+  timing_results <- read.csv("output/r_results/primary/subgroup_method_timing.csv")
+  
+  # Combine datasets with a classification column
+  type_results$classification <- "Method Type"
+  timing_results$classification <- "Method Timing"
+  
+  combined_results <- rbind(
+    select(type_results, Subgroup, Pooled_Proportion, CI_Lower, CI_Upper, k, classification),
+    select(timing_results, Subgroup, Pooled_Proportion, CI_Lower, CI_Upper, k, classification)
+  )
+  
+  # Create multi-panel plot
+  ggplot(combined_results, aes(y = reorder(Subgroup, Pooled_Proportion), x = Pooled_Proportion)) +
+    geom_point(size = 3) +
+    geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+    facet_wrap(~classification, scales = "free_y", ncol = 1) +
+    labs(
+      title = "Careless Responding Rates by Method Classification",
+      subtitle = "First-Method Approach (PRIMARY)",
+      x = "Proportion of Careless Responses",
+      y = ""
+    ) +
+    scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(face = "bold"),
+      axis.text.y = element_text(face = "bold"),
+      panel.background = element_rect(fill = "white"),
+      strip.background = element_rect(fill = "lightblue"),
+      strip.text = element_text(face = "bold")
+    )
+  
+  ggsave("output/figures/method_classifications_comparison.png", width = 10, height = 8, dpi = 300)
+}
+
+##############################################
 # Funnel Plot Analysis
 ##############################################
 

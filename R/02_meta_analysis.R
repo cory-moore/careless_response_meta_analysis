@@ -123,7 +123,7 @@ process_approach <- function(approach_params) {
     Q = overall_results$q, p_Q = overall_results$p_q
   ) %>% write_csv(file.path(approach_params$output_dir, "overall_results.csv"))
   
-  method_vars <- c("method_type", "cr_method")
+  method_vars <- c("method_type", "cr_method", "method_timing")
   sample_vars <- c("sample_source", "sample_recruitment", "sample_platform", "sample_method",
                   "journal", "sample_level", "sample_incentive", "sample_country", 
                   "design_method", "design_location")

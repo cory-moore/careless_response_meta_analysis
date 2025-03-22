@@ -353,6 +353,28 @@ def create_first_method_dataset(df):
     first_method_data = clean_count_variables(first_method_data, count_vars=['cr_amount', 'sample_size'])
     first_method_data['proportion'] = np.clip(first_method_data['cr_amount'] / first_method_data['sample_size'], 0, 1)
     
+    # Add method type and timing
+    if 'cr_method' in first_method_data.columns:
+        def get_method_type(method_code):
+            for type_name, methods in codebook['cr_method_type'].items():
+                if method_code in methods:
+                    return type_name
+            return "other"
+        
+        first_method_data['method_type'] = first_method_data['cr_method'].apply(get_method_type)
+        
+        def get_method_timing(method_code):
+            a_priori_methods = codebook['cr_method_timing_map']['a_priori']
+            post_hoc_methods = codebook['cr_method_timing_map']['post_hoc']
+            
+            if method_code in a_priori_methods:
+                return 'a_priori'
+            elif method_code in post_hoc_methods:
+                return 'post_hoc'
+            return None
+        
+        first_method_data['method_timing'] = first_method_data['cr_method'].apply(get_method_timing)
+    
     problematic = first_method_data[
         (first_method_data['proportion'] < 0) | 
         (first_method_data['proportion'] > 1)]
@@ -385,6 +407,28 @@ def create_single_method_dataset(df):
     single_method_data = clean_count_variables(single_method_data, count_vars=['cr_amount', 'sample_size'])
     
     single_method_data['proportion'] = np.clip(single_method_data['cr_amount'] / single_method_data['sample_size'], 0, 1)
+    
+    # Add method type and timing
+    if 'cr_method' in single_method_data.columns:
+        def get_method_type(method_code):
+            for type_name, methods in codebook['cr_method_type'].items():
+                if method_code in methods:
+                    return type_name
+            return "other"
+        
+        single_method_data['method_type'] = single_method_data['cr_method'].apply(get_method_type)
+        
+        def get_method_timing(method_code):
+            a_priori_methods = codebook['cr_method_timing_map']['a_priori']
+            post_hoc_methods = codebook['cr_method_timing_map']['post_hoc']
+            
+            if method_code in a_priori_methods:
+                return 'a_priori'
+            elif method_code in post_hoc_methods:
+                return 'post_hoc'
+            return None
+        
+        single_method_data['method_timing'] = single_method_data['cr_method'].apply(get_method_timing)
     
     excluded = unique_studies - single_method_count
     print(f"  Starting with {unique_studies} unique studies")
@@ -499,6 +543,18 @@ def create_sequential_dataset(df):
             return "other"
         
         method_pos_df['method_type'] = method_pos_df['method_code'].apply(get_method_type)
+        
+        def get_method_timing(method_code):
+            a_priori_methods = codebook['cr_method_timing_map']['a_priori']
+            post_hoc_methods = codebook['cr_method_timing_map']['post_hoc']
+            
+            if method_code in a_priori_methods:
+                return 'a_priori'
+            elif method_code in post_hoc_methods:
+                return 'post_hoc'
+            return None
+        
+        method_pos_df['method_timing'] = method_pos_df['method_code'].apply(get_method_timing)
     
     method_position_count = len(method_pos_df)
     pos_counts = method_pos_df['method_position'].value_counts().sort_index()
@@ -513,11 +569,6 @@ def create_overall_dataset(df):
     Create dataset including all studies, using the total CR amount.
     This captures all available data regardless of method configuration
     (single method, sequential, non-sequential).
-    
-    Returns:
-    --------
-    pandas.DataFrame
-        Complete dataset with total CR proportions
     """
     print("\nCREATING OVERALL DATASET:")
     total_studies = len(df)
@@ -537,6 +588,39 @@ def create_overall_dataset(df):
         print(f"    Other studies: {other_count} ({round(other_count/unique_studies*100, 1)}%)")
     
     overall_data = df.copy()
+    
+    # Add method information for single-method studies
+    single_method_mask = (overall_data['cr_multiple'] == 0)
+    if 'cr_1_method' in overall_data.columns:
+        overall_data.loc[single_method_mask, 'cr_method'] = overall_data.loc[single_method_mask, 'cr_1_method']
+    
+    # Add method type and timing for studies with method information
+    if 'cr_method' in overall_data.columns:
+        def get_method_type(method_code):
+            if pd.isna(method_code):
+                return None
+                
+            for type_name, methods in codebook['cr_method_type'].items():
+                if method_code in methods:
+                    return type_name
+            return "other"
+        
+        overall_data['method_type'] = overall_data['cr_method'].apply(get_method_type)
+        
+        def get_method_timing(method_code):
+            if pd.isna(method_code):
+                return None
+                
+            a_priori_methods = codebook['cr_method_timing_map']['a_priori']
+            post_hoc_methods = codebook['cr_method_timing_map']['post_hoc']
+            
+            if method_code in a_priori_methods:
+                return 'a_priori'
+            elif method_code in post_hoc_methods:
+                return 'post_hoc'
+            return None
+        
+        overall_data['method_timing'] = overall_data['cr_method'].apply(get_method_timing)
     
     overall_data = clean_count_variables(overall_data, count_vars=['cr_total_amount', 'sample_size'])
     
@@ -593,7 +677,7 @@ def process_data(data_path):
     first_method_data = create_first_method_dataset(position_data)
     single_method_data = create_single_method_dataset(position_data)
     sequential_data = create_sequential_dataset(position_data)
-    overall_data = create_overall_dataset(position_data)  # Add this line
+    overall_data = create_overall_dataset(position_data)
     
     first_method_data.to_csv("data/processed/first_method_data.csv", index=False)
     single_method_data.to_csv("data/processed/single_method_data.csv", index=False)
@@ -606,7 +690,7 @@ def process_data(data_path):
     print("  - first_method_data.csv: Primary analysis dataset (First-Method approach)")
     print("  - single_method_data.csv: Secondary analysis dataset (Single-Method only)")
     print("  - sequential_data.csv: Positional effects analysis dataset")
-    print("  - overall_data.csv: Complete dataset using total CR amounts")  # Add this line
+    print("  - overall_data.csv: Complete dataset using total CR amounts")
     
     return cleaned_data, first_method_data, single_method_data, sequential_data, overall_data
 

@@ -136,6 +136,14 @@
         "response_pattern": [2, 3, 14],
         "self_reported": [6, 7, 8]
     },
+    "cr_method_timing": {
+        "0": "a_priori",
+        "1": "post_hoc"
+    },
+    "cr_method_timing_map": {
+        "a_priori": [0, 1, 6, 7, 8, 12, 13],
+        "post_hoc": [2, 3, 4, 5, 9, 10, 11, 14, 15, 16, 17]
+    },
     "design_time": {
         "-1": "",
         "0": "cross-sectional",

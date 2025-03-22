@@ -90,7 +90,7 @@ heterogeneity_results <- tibble(
 )
 
 # Define subgroup variables by type
-method_vars <- c("method_type", "cr_method")
+method_vars <- c("method_type", "cr_method", "method_timing")
 sample_vars <- c("sample_source", "sample_recruitment", "sample_platform", "sample_method",
                 "journal", "sample_level", "sample_incentive", "sample_country", 
                 "design_method", "design_location")

@@ -353,6 +353,51 @@ if (!is.null(method_results)) {
          method_plot, width = 9, height = 6, dpi = 300)
 }
 
+# 1b. Method Timing Analysis (A Priori vs Post Hoc) -----------------------
+
+message("\nRUNNING METHOD TIMING ANALYSIS")
+message("===========================")
+
+# Method timing model
+method_timing_model <- run_multilevel_meta(
+  first_method_ml,
+  formula = ~ 0 + method_timing,
+  random_structure = ~ 1 | ID,
+  yi_var = "logit_prop",
+  vi_var = "var_logit"
+)
+
+# Save and display method timing results
+method_timing_results <- save_model_results(method_timing_model, "method_timing_effectiveness")
+
+if (!is.null(method_timing_results)) {
+  message("\nMethod Timing Results:")
+  method_timing_results$fixed_effects %>%
+    select(term, detection_rate, ci_lower, ci_upper, significance) %>%
+    arrange(desc(detection_rate)) %>%
+    as.data.frame() %>%
+    print()
+  
+  # Create method timing plot
+  timing_plot <- create_effect_plot(
+    method_timing_results$fixed_effects,
+    x_col = "detection_rate",
+    y_col = "term",
+    error_min = "ci_lower",
+    error_max = "ci_upper",
+    title = "Careless Responding Rates by Method Timing",
+    subtitle = "A Priori (embedded in survey) vs Post Hoc (after data collection)",
+    x_lab = "Detection Rate (%)",
+    y_lab = "Method Timing",
+    text_col = "significance",
+    text_label = "Significance"
+  )
+  
+  # Save plot
+  ggsave("output/figures/multilevel/method_timing_effectiveness.png", 
+         timing_plot, width = 9, height = 5, dpi = 300)
+}
+
 # 2. Sample Characteristics Analysis --------------------------------------
 
 message("\nRUNNING SAMPLE CHARACTERISTICS ANALYSIS")
@@ -628,6 +673,33 @@ if (nrow(sequential_ml) > 0 &&
   # Save interaction model results
   save_model_results(raw_interaction_model, "raw_method_position_interaction")
   save_model_results(adj_interaction_model, "adjusted_method_position_interaction")
+  
+  # Add method timing x position interaction if data available
+  if ("method_timing" %in% names(sequential_ml)) {
+    message("\nRunning Method Timing × Position Interaction Analysis...")
+    
+    # For raw proportions
+    raw_timing_position_model <- run_multilevel_meta(
+      sequential_ml,
+      formula = ~ method_timing * factor(method_position),
+      random_structure = ~ 1 | ID,
+      yi_var = "raw_logit_prop",
+      vi_var = "raw_var_logit"
+    )
+    
+    # For adjusted proportions
+    adj_timing_position_model <- run_multilevel_meta(
+      sequential_ml,
+      formula = ~ method_timing * factor(method_position),
+      random_structure = ~ 1 | ID,
+      yi_var = "adj_logit_prop",
+      vi_var = "adj_var_logit"
+    )
+    
+    # Save timing x position interaction results
+    save_model_results(raw_timing_position_model, "raw_timing_position_interaction")
+    save_model_results(adj_timing_position_model, "adjusted_timing_position_interaction")
+  }
   
   # Improved prediction function for interaction effects
   generate_improved_predictions <- function(model_results, proportion_type = "Raw") {

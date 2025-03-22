@@ -424,7 +424,7 @@ run_subgroup_exclusion <- function(data_obj, approach_name) {
   
   # Only include method-related variables for First-Method and Single-Method approaches
   if(approach_name %in% c("First-Method", "Single-Method")) {
-    subgroup_vars <- c(subgroup_vars, "method_type", "cr_method_name", "cr_method")
+    subgroup_vars <- c(subgroup_vars, "method_type", "cr_method_name", "cr_method", "method_timing")
   }
   
   # Common subgroup variables for all approaches

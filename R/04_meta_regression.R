@@ -816,7 +816,7 @@ main <- function() {
   categorical_vars <- c(
     "sample_source", "sample_recruitment", "sample_platform", 
     "sample_method", "journal", "sample_level", "sample_incentive", 
-    "sample_country", "design_method", "design_location", "method_type", "cr_method"
+    "sample_country", "design_method", "design_location", "method_type", "cr_method", "method_timing"
   )
   
   continuous_vars <- c("year", "sample_size", "sample_age", "total_items")

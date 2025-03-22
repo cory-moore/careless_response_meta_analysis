@@ -223,6 +223,42 @@ process_method_results <- function(wb) {
       )
     )
   }
+  
+  # Load method timing results from primary and secondary approaches
+  method_timing_results <- map_dfr(names(approaches), ~{
+    path <- glue("output/r_results/{.x}/subgroup_method_timing.csv")
+    result <- read_result(path)
+    if(!is.null(result) && nrow(result) > 0) {
+      result$Approach <- approaches[.x]
+    }
+    result
+  })
+  
+  if(!is.null(method_timing_results) && nrow(method_timing_results) > 0) {
+    formatted_timing_results <- method_timing_results %>%
+      mutate(
+        `Method Timing` = Subgroup,
+        `Pooled Proportion` = format_percentage(Pooled_Proportion),
+        `95% CI` = format_ci(CI_Lower, CI_Upper),
+        `Studies (k)` = k,
+        `Sample Size (N)` = N,
+        `I²` = format_percentage(I2, 1),
+        `τ²` = round(tau2, 5)
+      ) %>%
+      select(Approach, `Method Timing`, `Pooled Proportion`, `95% CI`, 
+             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`) %>%
+      arrange(Approach, desc(`Pooled Proportion`))
+    
+    add_formatted_worksheet(
+      wb, "Method Timing Analysis", formatted_timing_results,
+      title = "Table: Careless Responding Rates by Detection Method Timing",
+      notes = paste0(
+        "Notes: This table presents careless responding rates by detection method timing. ",
+        "A priori methods are embedded in the survey design (attention checks, timing), while ",
+        "post hoc methods are applied after data collection (consistency indices, outlier analysis)."
+      )
+    )
+  }
 }
 
 process_sample_results <- function(wb) {
