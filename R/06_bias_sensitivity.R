@@ -998,7 +998,7 @@ if(nrow(subgroup_combined) > 0) {
   }
   
   # Save the workbook
-  file_path <- "output/r_results/sensitivity_analysis_results.xlsx"
+  file_path <- "output/r_results/sensitivity/sensitivity_analysis_results.xlsx"
   saveWorkbook(wb, file_path, overwrite = TRUE)
   
   cat("  Excel workbook created and saved to:", file_path, "\n")

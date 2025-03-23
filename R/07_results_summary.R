@@ -17,6 +17,7 @@
 library(tidyverse)
 library(openxlsx)
 library(glue)
+library(metafor)  # Add metafor package for transformations
 
 # Create output directory
 dir.create("output/tables", recursive = TRUE, showWarnings = FALSE)
@@ -733,6 +734,41 @@ process_sensitivity_analyses <- function(wb) {
       notes = paste0(
         "Notes: This table examines how minimum sample size thresholds affect the pooled estimate. ",
         "It helps assess whether smaller studies systematically differ from larger ones."
+      )
+    )
+  }
+  
+  # Process leave-one-out analysis
+  leave_one_out_results <- read_result("output/r_results/sensitivity/loo_First-Method.csv")
+  
+  if(!is.null(leave_one_out_results) && nrow(leave_one_out_results) > 0) {
+    # Get top 20 most influential studies (based on largest absolute effect)
+    top_influential <- leave_one_out_results %>%
+      mutate(abs_effect = abs(effect_on_estimate)) %>%
+      arrange(desc(abs_effect)) %>%
+      head(20)
+    
+    # Format the data directly
+    formatted_loo <- top_influential %>%
+      mutate(
+        `Study ID` = ID,
+        `Pooled Proportion When Omitted` = format_percentage(transf.ilogit(estimate)),
+        `Change in Estimate` = round(effect_on_estimate, 4),
+        `% Change` = paste0(round(effect_perc, 1), "%"),
+        `Study Proportion` = format_percentage(removed_proportion)
+      ) %>%
+      select(`Study ID`, `Pooled Proportion When Omitted`, 
+             `Change in Estimate`, `% Change`, `Study Proportion`) %>%
+      arrange(desc(abs(as.numeric(gsub("%", "", `% Change`)))))
+    
+    add_formatted_worksheet(
+      wb, "Leave-One-Out Analysis", formatted_loo,
+      title = "Table 17: Leave-One-Out Sensitivity Analysis",
+      notes = paste0(
+        "Notes: This table shows how the pooled estimate changes when individual studies ",
+        "are excluded from the analysis. The studies with the largest impact on the ",
+        "overall estimate are shown. '% Change' represents the percentage change in the ",
+        "estimate when the study is excluded. The First-Method approach is used for this analysis."
       )
     )
   }
