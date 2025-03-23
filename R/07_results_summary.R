@@ -772,6 +772,90 @@ process_sensitivity_analyses <- function(wb) {
       )
     )
   }
+  
+  # Process influential studies exclusion analysis
+  influential_exclusion_first <- read_result("output/r_results/sensitivity/influential_exclusion_First-Method.csv")
+  influential_exclusion_single <- read_result("output/r_results/sensitivity/influential_exclusion_Single-Method.csv")
+  influential_exclusion_overall <- read_result("output/r_results/sensitivity/influential_exclusion_Overall.csv")
+  
+  # Combine results from all approaches
+  influential_combined <- bind_rows(
+    if(!is.null(influential_exclusion_first)) mutate(influential_exclusion_first, Approach = "First-Method") else NULL,
+    if(!is.null(influential_exclusion_single)) mutate(influential_exclusion_single, Approach = "Single-Method") else NULL,
+    if(!is.null(influential_exclusion_overall)) mutate(influential_exclusion_overall, Approach = "Overall") else NULL
+  )
+  
+  if(nrow(influential_combined) > 0) {
+    # Format the table for presentation
+    formatted_exclusion <- influential_combined %>%
+      mutate(
+        `Approach` = Approach,
+        `Original Studies` = K_Original,
+        `Studies Excluded` = K_Excluded,
+        `Studies Remaining` = K_Remaining,
+        `Original Estimate` = format_percentage(Original_Estimate),
+        `Original 95% CI` = format_ci(Original_CI_Lower, Original_CI_Upper),
+        `Estimate Without Influential` = format_percentage(New_Estimate),
+        `New 95% CI` = format_ci(New_CI_Lower, New_CI_Upper),
+        `Change` = paste0(round(Percent_Change, 2), "%"),
+        `Original I²` = format_percentage(Original_I2, 1),
+        `New I²` = format_percentage(New_I2, 1)
+      ) %>%
+      select(`Approach`, `Original Studies`, `Studies Excluded`, `Studies Remaining`,
+             `Original Estimate`, `Original 95% CI`, `Estimate Without Influential`, 
+             `New 95% CI`, `Change`, `Original I²`, `New I²`)
+    
+    # Add worksheet with the summary table
+    add_formatted_worksheet(
+      wb, "Influential Studies Exclusion", formatted_exclusion,
+      title = "Table 18: Influential Studies Exclusion Analysis",
+      notes = paste0(
+        "Notes: This table shows the impact of excluding all studies identified as ",
+        "influential based on Cook's distance (cutoff = 4/n). The effect on pooled ",
+        "estimates and heterogeneity is reported for each analysis approach."
+      )
+    )
+    
+    # Also add information about which studies were excluded
+    excluded_first <- read_result("output/r_results/sensitivity/excluded_influential_First-Method.csv")
+    excluded_single <- read_result("output/r_results/sensitivity/excluded_influential_Single-Method.csv")
+    excluded_overall <- read_result("output/r_results/sensitivity/excluded_influential_Overall.csv")
+    
+    # Combine all excluded studies
+    excluded_combined <- bind_rows(
+      if(!is.null(excluded_first)) mutate(excluded_first, Approach = "First-Method") else NULL,
+      if(!is.null(excluded_single)) mutate(excluded_single, Approach = "Single-Method") else NULL,
+      if(!is.null(excluded_overall)) mutate(excluded_overall, Approach = "Overall") else NULL
+    )
+    
+    if(nrow(excluded_combined) > 0) {
+      # Format the excluded studies table
+      formatted_excluded <- excluded_combined %>%
+        mutate(
+          `Approach` = Approach,
+          `Study ID` = ID,
+          `Careless Proportion` = format_percentage(proportion),
+          `Sample Size` = sample_size,
+          `Cook's Distance` = round(cooks_distance, 4)
+        ) %>%
+        select(`Approach`, `Study ID`, `Careless Proportion`, `Sample Size`, `Cook's Distance`) %>%
+        arrange(`Approach`, desc(`Cook's Distance`))
+      
+      # Add it to the worksheet below the main table
+      writeData(wb, "Influential Studies Exclusion", 
+                "List of Excluded Influential Studies", 
+                startRow = nrow(formatted_exclusion) + 7)  # 7 rows for title, header, and some space
+      
+      addStyle(wb, "Influential Studies Exclusion", 
+               createStyle(textDecoration = "bold"), 
+               rows = nrow(formatted_exclusion) + 7, cols = 1)
+      
+      writeData(wb, "Influential Studies Exclusion", 
+                formatted_excluded, 
+                startRow = nrow(formatted_exclusion) + 9,  # 2 more rows of space after the subtitle
+                headerStyle = createStyle(textDecoration = "bold"))
+    }
+  }
 }
 
 # Main Execution ---------------------------------------------------------

@@ -730,6 +730,175 @@ sample_size_results <- list(
   overall = run_sample_size_threshold(overall_method, "Overall")
 )
 
+# 6. Influential Studies Exclusion Analysis
+cat("\nRunning influential studies exclusion analysis...\n")
+
+run_influential_exclusion <- function(data_obj, approach_name) {
+  if(is.null(data_obj)) return(NULL)
+  
+  meta_result <- data_obj$meta_result
+  data <- data_obj$data
+  original_estimate <- transf.ilogit(meta_result$b)
+  original_ci_lower <- transf.ilogit(meta_result$ci.lb)
+  original_ci_upper <- transf.ilogit(meta_result$ci.ub)
+  original_tau2 <- meta_result$tau2
+  original_i2 <- meta_result$I2
+  
+  cat(paste0("  Analyzing effect of excluding influential studies for ", approach_name, " approach\n"))
+  
+  # Calculate Cook's distances based on leave-one-out results
+  loo <- leave1out(meta_result)
+  cooks_d <- (meta_result$b - loo$estimate)^2 / (loo$se^2)
+  
+  # Calculate cutoff (common rule of thumb: 4/n)
+  cutoff <- 4/nrow(data)
+  
+  # Identify influential studies (exceeding cutoff)
+  influential_indices <- which(cooks_d > cutoff)
+  
+  if(length(influential_indices) == 0) {
+    cat("    No influential studies identified exceeding the threshold\n")
+    return(NULL)
+  }
+  
+  cat("    Identified", length(influential_indices), "influential studies exceeding threshold\n")
+  
+  # Get IDs of influential studies
+  influential_ids <- data$ID[influential_indices]
+  cat("    Influential studies:", paste(influential_ids, collapse=", "), "\n")
+  
+  # Create subset excluding influential studies
+  subset_data <- data[!(data$ID %in% influential_ids), ]
+  
+  # Run meta-analysis on the subset
+  subset_meta <- tryCatch({
+    rma(yi = yi, vi = vi, data = subset_data, method = "DL")
+  }, error = function(e) {
+    cat("    Error in meta-analysis excluding influential studies:", e$message, "\n")
+    return(NULL)
+  })
+  
+  if(is.null(subset_meta)) {
+    return(NULL)
+  }
+  
+  # Calculate new estimates and changes
+  new_estimate <- transf.ilogit(subset_meta$b)
+  new_ci_lower <- transf.ilogit(subset_meta$ci.lb)
+  new_ci_upper <- transf.ilogit(subset_meta$ci.ub)
+  abs_change <- abs(new_estimate - original_estimate)
+  perc_change <- (abs_change / original_estimate) * 100
+  
+  # Create results dataframe
+  results <- data.frame(
+    Approach = approach_name,
+    K_Original = nrow(data),
+    K_Excluded = length(influential_indices),
+    K_Remaining = nrow(subset_data),
+    Original_Estimate = original_estimate,
+    Original_CI_Lower = original_ci_lower,
+    Original_CI_Upper = original_ci_upper,
+    Original_Tau2 = original_tau2,
+    Original_I2 = original_i2,
+    New_Estimate = new_estimate,
+    New_CI_Lower = new_ci_lower,
+    New_CI_Upper = new_ci_upper,
+    New_Tau2 = subset_meta$tau2,
+    New_I2 = subset_meta$I2,
+    Absolute_Change = abs_change,
+    Percent_Change = perc_change
+  )
+  
+  # Create study list of excluded studies with their values
+  excluded_studies <- data[data$ID %in% influential_ids, ] %>%
+    mutate(
+      proportion = transf.ilogit(yi),
+      cooks_distance = cooks_d[match(ID, data$ID)]
+    ) %>%
+    select(ID, proportion, sample_size, cooks_distance) %>%
+    arrange(desc(cooks_distance))
+  
+  # Save results
+  write.csv(results, 
+            glue("output/r_results/sensitivity/influential_exclusion_{approach_name}.csv"), 
+            row.names = FALSE)
+  
+  write.csv(excluded_studies, 
+            glue("output/r_results/sensitivity/excluded_influential_{approach_name}.csv"), 
+            row.names = FALSE)
+  
+  # Create forest plot comparing original vs. new estimates
+  comparison <- rbind(
+    data.frame(
+      Analysis = paste0(approach_name, " - Original"),
+      Estimate = original_estimate,
+      CI_Lower = original_ci_lower,
+      CI_Upper = original_ci_upper,
+      K = nrow(data)
+    ),
+    data.frame(
+      Analysis = paste0(approach_name, " - Without Influential"),
+      Estimate = new_estimate,
+      CI_Lower = new_ci_lower,
+      CI_Upper = new_ci_upper,
+      K = nrow(subset_data)
+    )
+  )
+  
+  p <- ggplot(comparison, aes(y = reorder(Analysis, Estimate))) +
+    geom_point(aes(x = Estimate), size = 5) +
+    geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+    scale_x_continuous(labels = scales::percent_format()) +
+    labs(
+      title = glue("Effect of Excluding Influential Studies - {approach_name} Approach"),
+      subtitle = paste0("Excluding ", length(influential_indices), " studies with Cook's distance > ", round(cutoff, 4)),
+      x = "Careless Responding Rate",
+      y = ""
+    ) +
+    annotate("text", x = max(comparison$CI_Upper) * 1.05, 
+             y = 1:nrow(comparison), 
+             label = paste0("k=", comparison$K), 
+             hjust = 0) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(face = "bold"),
+      axis.text.y = element_text(face = "bold"),
+      panel.grid.major.x = element_line(color = "gray90")
+    ) +
+    coord_cartesian(clip = "off") +
+    theme(plot.margin = margin(10, 120, 10, 10))
+  
+  plot_filename <- glue("output/figures/sensitivity/influential_exclusion_{approach_name}.png")
+  ggsave(plot_filename, p, width = 10, height = 6, dpi = 300)
+  
+  cat("    Saved plot to", plot_filename, "\n")
+  
+  cat("    Completed influential studies exclusion analysis\n")
+  
+  return(list(
+    results = results,
+    excluded_studies = excluded_studies,
+    comparison = comparison
+  ))
+}
+
+# Run for each approach with better error handling
+influential_exclusion_results <- list()
+for (approach in c("First-Method", "Single-Method", "Overall")) {
+  data_obj <- switch(approach,
+                   "First-Method" = first_method,
+                   "Single-Method" = single_method,
+                   "Overall" = overall_method)
+  
+  influential_exclusion_results[[tolower(gsub("-", "_", approach))]] <- 
+    tryCatch({
+      run_influential_exclusion(data_obj, approach)
+    }, error = function(e) {
+      cat("  Error in influential exclusion for", approach, ":", e$message, "\n")
+      return(NULL)
+    })
+}
+
 ###############################################################################
 # SUMMARY OF FINDINGS WITH EXCEL EXPORT
 ###############################################################################
@@ -984,6 +1153,99 @@ if(nrow(subgroup_combined) > 0) {
              rows = 1, cols = 1:ncol(threshold_combined))
   } else {
     writeData(wb, "Sample Size Thresholds", "No sample size threshold results available")
+  }
+  
+  # 6. Influential Studies Exclusion Analysis
+  addWorksheet(wb, "Influential Studies Exclusion")
+  
+  influential_combined <- data.frame()
+  excluded_studies_combined <- data.frame()
+  
+  for(approach in c("First-Method", "Single-Method", "Overall")) {
+    result_list <- switch(approach,
+                         "First-Method" = influential_exclusion_results$first_method,
+                         "Single-Method" = influential_exclusion_results$single_method,
+                         "Overall" = influential_exclusion_results$overall)
+    
+    if(!is.null(result_list) && !is.null(result_list$results) && 
+       is.data.frame(result_list$results) && nrow(result_list$results) > 0) {
+      
+      influential_combined <- bind_rows(influential_combined, result_list$results)
+      
+      # Add approach column to excluded studies and combine
+      if(!is.null(result_list$excluded_studies) && 
+         is.data.frame(result_list$excluded_studies) && 
+         nrow(result_list$excluded_studies) > 0) {
+        
+        excluded <- result_list$excluded_studies %>%
+          mutate(Approach = approach)
+        
+        excluded_studies_combined <- bind_rows(excluded_studies_combined, excluded)
+      }
+    }
+  }
+  
+  if(nrow(influential_combined) > 0) {
+    # Write summary table
+    writeData(wb, "Influential Studies Exclusion", "Summary of Analysis Without Influential Studies")
+    
+    summary_table <- influential_combined %>%
+      mutate(
+        Original_Est_CI = paste0(round(Original_Estimate*100, 2), "% [", 
+                              round(Original_CI_Lower*100, 2), "-", 
+                              round(Original_CI_Upper*100, 2), "%]"),
+        New_Est_CI = paste0(round(New_Estimate*100, 2), "% [", 
+                          round(New_CI_Lower*100, 2), "-", 
+                          round(New_CI_Upper*100, 2), "%]"),
+        Original_I2 = paste0(round(Original_I2, 1), "%"),
+        New_I2 = paste0(round(New_I2, 1), "%"),
+        Change = paste0(round(Percent_Change, 2), "%")
+      ) %>%
+      select(Approach, K_Original, K_Excluded, K_Remaining, 
+             Original_Est_CI, New_Est_CI, Original_I2, New_I2, Change) %>%
+      rename(
+        "Approach" = Approach,
+        "Original Studies" = K_Original,
+        "Studies Excluded" = K_Excluded,
+        "Studies Remaining" = K_Remaining,
+        "Original Estimate [95% CI]" = Original_Est_CI,
+        "New Estimate [95% CI]" = New_Est_CI,
+        "Original I²" = Original_I2,
+        "New I²" = New_I2,
+        "% Change in Estimate" = Change
+      )
+    
+    writeData(wb, "Influential Studies Exclusion", summary_table, startRow = 2)
+    addStyle(wb, "Influential Studies Exclusion", createStyle(textDecoration = "bold"), 
+             rows = 2, cols = 1:ncol(summary_table))
+    
+    # Write list of excluded studies if we have any
+    if(nrow(excluded_studies_combined) > 0) {
+      writeData(wb, "Influential Studies Exclusion", "List of Excluded Influential Studies", 
+                startRow = nrow(summary_table) + 4)
+      
+      excluded_table <- excluded_studies_combined %>%
+        mutate(
+          proportion = paste0(round(proportion*100, 2), "%"),
+          cooks_distance = round(cooks_distance, 4)
+        ) %>%
+        select(Approach, ID, proportion, sample_size, cooks_distance) %>%
+        rename(
+          "Approach" = Approach,
+          "Study ID" = ID,
+          "Careless Proportion" = proportion,
+          "Sample Size" = sample_size,
+          "Cook's Distance" = cooks_distance
+        ) %>%
+        arrange(Approach, desc(`Cook's Distance`))
+      
+      writeData(wb, "Influential Studies Exclusion", excluded_table, 
+                startRow = nrow(summary_table) + 5)
+      addStyle(wb, "Influential Studies Exclusion", createStyle(textDecoration = "bold"), 
+               rows = nrow(summary_table) + 5, cols = 1:ncol(excluded_table))
+    }
+  } else {
+    writeData(wb, "Influential Studies Exclusion", "No influential studies exclusion results available")
   }
   
   # Apply formatting to all worksheets

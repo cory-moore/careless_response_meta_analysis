@@ -337,6 +337,149 @@ text(ifelse(influence_data$influence > 0,
 dev.off()
 
 ##############################################
+# Cook's Distance Plot for Influential Diagnostics
+##############################################
+
+# Calculate Cook's distances based on leave-one-out results
+k <- length(loo$estimate)
+
+# Vectorized calculation (more efficient)
+# Cook's distance formula: D_i = (theta_hat - theta_hat_i)^2 / (p * MSE)
+# For meta-analysis adaptation: D_i = (b - b_i)^2 / var(b_i)
+overall_b <- rep(res$b, k)
+cooks_d <- (overall_b - loo$estimate)^2 / (loo$se^2)
+
+# Prepare data for plotting
+cooks_data <- data.frame(
+  ID = first_method_data$ID,
+  cooks_distance = cooks_d,
+  sample_size = first_method_data$sample_size,
+  proportion = transf.ilogit(es$yi),
+  study_index = 1:length(cooks_d)
+)
+
+# Sort by Cook's distance for ranking
+cooks_data <- cooks_data[order(cooks_data$cooks_distance, decreasing = TRUE), ]
+cooks_data$rank <- 1:nrow(cooks_data)
+
+# Calculate cutoff (common rule of thumb: 4/n)
+cutoff <- 4/nrow(cooks_data)
+
+# Identify influential studies (exceeding cutoff)
+cooks_data$influential <- cooks_data$cooks_distance > cutoff
+cooks_data$label <- ifelse(cooks_data$influential, as.character(cooks_data$ID), "")
+
+# Revert to original order for x-axis ordering in plot
+cooks_data <- cooks_data[order(cooks_data$study_index), ]
+
+# Create modern scatter plot of all Cook's distances
+p <- ggplot(cooks_data, aes(x = study_index, y = cooks_distance)) +
+  geom_point(aes(color = influential, size = proportion * 100), alpha = 0.7) +
+  geom_hline(yintercept = cutoff, linetype = "dashed", color = "red") +
+  scale_color_manual(values = c("FALSE" = "steelblue", "TRUE" = "darkred"),
+                    labels = c("FALSE" = "Non-influential", "TRUE" = "Influential")) +
+  scale_size_continuous(name = "Proportion (%)", range = c(2, 6)) +
+  labs(
+    title = "Influential Diagnostics Based on Cook's Distance",
+    subtitle = paste0("Cutoff: ", round(cutoff, 4), " (", sum(cooks_data$influential), 
+                    " studies exceed threshold)"),
+    x = "Study Index",
+    y = "Cook's Distance",
+    color = "Influence Status"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right",
+    legend.title = element_text(face = "bold"),
+    panel.grid.major.y = element_line(color = "gray90"),
+    panel.grid.minor.y = element_line(color = "gray95")
+  )
+
+# Add a custom legend entry for the cutoff line
+p <- p + guides(
+  color = guide_legend(override.aes = list(size = 4)),
+  size = guide_legend(),
+  linetype = guide_legend(
+    override.aes = list(color = "red", size = 0.5),
+    title = NULL,
+    keywidth = unit(2.5, "cm"),
+    label.position = "right"
+  )
+) +
+annotate("segment", x = 0, xend = 0, y = 0, yend = 0, 
+        linetype = "dashed", color = "red", key_glyph = "path") +
+scale_linetype_manual(name = NULL, 
+                    values = "dashed", 
+                    labels = paste0("Cutoff: ", round(cutoff, 4)),
+                    guide = guide_legend(order = 3))
+
+# Add text labels for influential studies
+influential_subset <- cooks_data[cooks_data$influential, ]
+if(nrow(influential_subset) > 0) {
+  p <- p + 
+    ggrepel::geom_text_repel(
+      data = influential_subset,
+      aes(label = ID),
+      nudge_y = 0.002,
+      size = 3.5,
+      box.padding = 0.5,
+      point.padding = 0.3,
+      force = 1,
+      direction = "both",
+      segment.color = "gray50",
+      min.segment.length = 0
+    )
+}
+
+# Save the plot
+ggsave("output/figures/cooks_distance_scatter.pdf", p, width = 12, height = 8)
+ggsave("output/figures/cooks_distance_scatter.png", p, width = 12, height = 8, dpi = 300)
+
+# Create horizontal bar plot version (alternative visualization)
+# Order by Cook's distance value
+cooks_data <- cooks_data[order(cooks_data$cooks_distance, decreasing = TRUE), ]
+
+# Create data frame for horizontal bar plot
+p_bar <- ggplot(cooks_data, aes(x = reorder(ID, cooks_distance), y = cooks_distance)) +
+  geom_col(aes(fill = influential)) +
+  geom_hline(yintercept = cutoff, linetype = "dashed", color = "red") +
+  scale_fill_manual(values = c("FALSE" = "steelblue", "TRUE" = "darkred"),
+                  labels = c("FALSE" = "Non-influential", "TRUE" = "Influential")) +
+  annotate("text", x = 10, y = cutoff * 1.1, 
+         label = paste0("Cutoff = 4/n = ", round(cutoff, 4)), 
+         color = "red", hjust = 0) +
+  labs(
+    title = "Influential Diagnostics Based on Cook's Distance",
+    subtitle = paste0("Cutoff: 4/n = ", round(cutoff, 4), " (", sum(cooks_data$influential), 
+                    " studies exceed threshold)"),
+    x = "Study ID",
+    y = "Cook's Distance",
+    fill = "Influence Status"
+  ) +
+  coord_flip() +
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right",
+    legend.title = element_text(face = "bold"),
+    axis.text.y = element_text(size = 8),
+    panel.grid.major.x = element_line(color = "gray90")
+  )
+
+# Add text annotations for proportions
+p_bar <- p_bar + 
+  geom_text(
+    aes(label = paste0(round(proportion * 100, 1), "%")),
+    hjust = -0.2,
+    size = 3
+  )
+
+# Save the bar plot version
+ggsave("output/figures/cooks_distance_plot.pdf", p_bar, width = 11, height = 14)
+ggsave("output/figures/cooks_distance_plot.png", p_bar, width = 11, height = 14, dpi = 300)
+
+##############################################
 # Weight Analysis Plots
 ##############################################
 weights <- 1/es$vi
