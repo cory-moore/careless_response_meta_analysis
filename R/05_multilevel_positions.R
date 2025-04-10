@@ -161,21 +161,23 @@ prepare_categorical_groupings <- function(data) {
   if ("cr_method" %in% names(data)) {
     data <- data %>%
       mutate(method_group = case_when(
-        cr_method %in% c(0, 12, 13) ~ "attention_checks",
-        cr_method %in% c(1, 2, 3, 14) ~ "response_patterns",
-        cr_method %in% c(4, 5, 15, 16) ~ "statistical_methods",
+        cr_method == 1 ~ "response_time",
+        cr_method %in% c(4, 5) ~ "outlier_analysis",
+        cr_method %in% c(0, 12, 13) ~ "attention_check_items",
+        cr_method %in% c(9, 10, 11, 15, 16) ~ "consistency_indices",
+        cr_method %in% c(2, 3, 14) ~ "response_pattern",
         cr_method %in% c(6, 7, 8) ~ "self_reported",
-        cr_method %in% c(9, 10, 11) ~ "consistency_indices",
         TRUE ~ "other"
       ))
   } else if ("method_code" %in% names(data)) {
     data <- data %>%
       mutate(method_group = case_when(
-        method_code %in% c(0, 12, 13) ~ "attention_checks",
-        method_code %in% c(1, 2, 3, 14) ~ "response_patterns",
-        method_code %in% c(4, 5, 15, 16) ~ "statistical_methods",
+        method_code == 1 ~ "response_time",
+        method_code %in% c(4, 5) ~ "outlier_analysis",
+        method_code %in% c(0, 12, 13) ~ "attention_check_items",
+        method_code %in% c(9, 10, 11, 15, 16) ~ "consistency_indices",
+        method_code %in% c(2, 3, 14) ~ "response_pattern",
         method_code %in% c(6, 7, 8) ~ "self_reported",
-        method_code %in% c(9, 10, 11) ~ "consistency_indices",
         TRUE ~ "other"
       ))
   } else if ("method_type" %in% names(data)) {

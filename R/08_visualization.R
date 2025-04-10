@@ -20,10 +20,9 @@ ggplot(method_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
     y = "Detection Method Type"
   ) +
   scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
-  annotate("text", x = max(method_results$CI_Upper) * 1.1, 
-           y = 1:nrow(method_results), 
-           label = paste0("k=", method_results$k), 
-           hjust = 0) +
+  geom_text(aes(x = max(method_results$CI_Upper) * 1.1, 
+                label = paste0("k=", k)), 
+            hjust = 0) +
   theme_classic() +
   theme(
     plot.title = element_text(face = "bold"),
@@ -51,10 +50,9 @@ ggplot(timing_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
     y = "Detection Method Timing"
   ) +
   scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
-  annotate("text", x = max(timing_results$CI_Upper) * 1.1, 
-           y = 1:nrow(timing_results), 
-           label = paste0("k=", timing_results$k), 
-           hjust = 0) +
+  geom_text(aes(x = max(timing_results$CI_Upper) * 1.1, 
+                label = paste0("k=", k)), 
+            hjust = 0) +
   theme_classic() +
   theme(
     plot.title = element_text(face = "bold"),
@@ -86,6 +84,9 @@ if(file.exists("output/r_results/primary/subgroup_method_type.csv") &&
   ggplot(combined_results, aes(y = reorder(Subgroup, Pooled_Proportion), x = Pooled_Proportion)) +
     geom_point(size = 3) +
     geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+    geom_text(aes(x = max(CI_Upper) * 1.1, 
+                  label = paste0("k=", k)), 
+              hjust = 0) +
     facet_wrap(~classification, scales = "free_y", ncol = 1) +
     labs(
       title = "Careless Responding Rates by Method Classification",

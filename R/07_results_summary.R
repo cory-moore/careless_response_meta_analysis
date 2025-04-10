@@ -208,10 +208,12 @@ process_method_results <- function(wb) {
         `Studies (k)` = k,
         `Sample Size (N)` = N,
         `I²` = format_percentage(I2, 1),
-        `τ²` = round(tau2, 5)
+        `τ²` = round(tau2, 5),
+        `Q` = round(Q, 2),
+        `p-value` = format_pvalue(p_Q)
       ) %>%
       select(Approach, `Method Type`, `Pooled Proportion`, `95% CI`, 
-             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`) %>%
+             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`, `Q`, `p-value`) %>%
       arrange(Approach, desc(`Pooled Proportion`))
     
     add_formatted_worksheet(
@@ -220,7 +222,10 @@ process_method_results <- function(wb) {
       notes = paste0(
         "Notes: This table presents careless responding rates by detection method type. ",
         "Only First-Method and Single-Method approaches are included because method-level analysis ",
-        "is not conceptually appropriate for the Overall approach, which aggregates across methods."
+        "is not conceptually appropriate for the Overall approach, which aggregates across methods. ",
+        "I² indicates the percentage of variation due to true heterogeneity rather than sampling error. ",
+        "τ² represents the between-study variance component. ",
+        "Q statistic tests the null hypothesis that all studies share a common effect size."
       )
     )
   }
@@ -244,10 +249,12 @@ process_method_results <- function(wb) {
         `Studies (k)` = k,
         `Sample Size (N)` = N,
         `I²` = format_percentage(I2, 1),
-        `τ²` = round(tau2, 5)
+        `τ²` = round(tau2, 5),
+        `Q` = round(Q, 2),
+        `p-value` = format_pvalue(p_Q)
       ) %>%
       select(Approach, `Method Timing`, `Pooled Proportion`, `95% CI`, 
-             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`) %>%
+             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`, `Q`, `p-value`) %>%
       arrange(Approach, desc(`Pooled Proportion`))
     
     add_formatted_worksheet(
@@ -256,7 +263,10 @@ process_method_results <- function(wb) {
       notes = paste0(
         "Notes: This table presents careless responding rates by detection method timing. ",
         "A priori methods are embedded in the survey design (attention checks, timing), while ",
-        "post hoc methods are applied after data collection (consistency indices, outlier analysis)."
+        "post hoc methods are applied after data collection (consistency indices, outlier analysis). ",
+        "I² indicates the percentage of variation due to true heterogeneity rather than sampling error. ",
+        "τ² represents the between-study variance component. ",
+        "Q statistic tests the null hypothesis that all studies share a common effect size."
       )
     )
   }
@@ -292,10 +302,11 @@ process_sample_results <- function(wb) {
         `95% CI` = format_ci(CI_Lower, CI_Upper),
         `Studies (k)` = k,
         `Sample Size (N)` = N,
-        `I²` = format_percentage(I2, 1)
+        `I²` = format_percentage(I2, 1),
+        `τ²` = round(tau2, 5)
       ) %>%
       select(Characteristic, Approach, `Category`, `Pooled Proportion`, `95% CI`, 
-             `Studies (k)`, `Sample Size (N)`, `I²`) %>%
+             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`) %>%
       arrange(Characteristic, Approach, desc(`Pooled Proportion`))
     
     add_formatted_worksheet(
@@ -304,7 +315,9 @@ process_sample_results <- function(wb) {
       notes = paste0(
         "Notes: This table presents careless responding rates across different sample characteristics. ",
         "Results are shown for all three analytical approaches to provide a comprehensive view of ",
-        "how sample characteristics influence careless responding prevalence."
+        "how sample characteristics influence careless responding prevalence. ",
+        "I² indicates the percentage of variation due to true heterogeneity rather than sampling error. ",
+        "τ² represents the between-study variance component."
       )
     )
   }
@@ -332,10 +345,14 @@ process_journal_results <- function(wb) {
         `Pooled Proportion` = format_percentage(Pooled_Proportion),
         `95% CI` = format_ci(CI_Lower, CI_Upper),
         `Studies (k)` = k,
-        `Sample Size (N)` = N
+        `Sample Size (N)` = N,
+        `I²` = format_percentage(I2, 1),
+        `τ²` = round(tau2, 5),
+        `Q` = round(Q, 2),
+        `p-value` = format_pvalue(p_Q)
       ) %>%
       select(Approach, `Journal`, `Pooled Proportion`, `95% CI`, 
-             `Studies (k)`, `Sample Size (N)`) %>%
+             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`, `Q`, `p-value`) %>%
       arrange(Approach, desc(`Studies (k)`)) %>%
       filter(`Studies (k)` >= 3)  # Only include journals with sufficient studies
     
@@ -345,7 +362,10 @@ process_journal_results <- function(wb) {
         title = "Table 4: Careless Responding Rates by Journal",
         notes = paste0(
           "Notes: This table presents careless responding rates across different journals. ",
-          "Results are shown only for journals with at least 3 studies for meta-analysis."
+          "Results are shown only for journals with at least 3 studies for meta-analysis. ",
+          "I² indicates the percentage of variation due to true heterogeneity rather than sampling error. ",
+          "τ² represents the between-study variance component. ",
+          "Q statistic tests the null hypothesis that all studies share a common effect size."
         )
       )
     }
@@ -377,10 +397,12 @@ process_temporal_results <- function(wb) {
         `Pooled Proportion` = format_percentage(Pooled_Proportion),
         `95% CI` = format_ci(CI_Lower, CI_Upper),
         `Studies (k)` = k,
-        `Sample Size (N)` = N
+        `Sample Size (N)` = N,
+        `I²` = format_percentage(I2, 1),
+        `τ²` = round(tau2, 5)
       ) %>%
       select(Approach, Year, `Pooled Proportion`, `95% CI`, 
-             `Studies (k)`, `Sample Size (N)`) %>%
+             `Studies (k)`, `Sample Size (N)`, `I²`, `τ²`) %>%
       arrange(Approach, Year)
     
     # Format trend analysis if available
@@ -405,7 +427,8 @@ process_temporal_results <- function(wb) {
       title = "Table 5: Careless Responding Rates by Publication Year",
       notes = paste0(
         "Notes: This table presents careless responding rates by publication year. ",
-        "The trend analysis examines whether there is a significant linear trend in rates over time."
+        "I² indicates the percentage of variation due to true heterogeneity rather than sampling error. ",
+        "τ² represents the between-study variance component."
       )
     )
     
@@ -626,8 +649,8 @@ process_position_effects <- function(wb) {
   # Process method × position interaction
   if(!is.null(method_position) && nrow(method_position) > 0) {
     # Filter to a manageable subset focusing on key method groups
-    key_methods <- c("attention_checks", "response_patterns", "statistical_methods", 
-                    "self_reported", "consistency_indices")
+    key_methods <- c("response_time", "outlier_analysis", "attention_check_items", 
+                    "consistency_indices", "response_pattern", "self_reported")
     
     formatted_interaction <- method_position %>%
       filter(method_group %in% key_methods) %>%
@@ -858,6 +881,75 @@ process_sensitivity_analyses <- function(wb) {
   }
 }
 
+process_distribution_table <- function(wb) {
+  # Load First-Method data
+  first_method_data <- read_result("data/for_r_meta/first_method_data.csv")
+  
+  if(!is.null(first_method_data) && nrow(first_method_data) > 0) {
+    # Create distribution table
+    distribution_table <- first_method_data %>%
+      mutate(
+        `CR Rate Range` = case_when(
+          proportion < 0.01 ~ "< 1%",
+          proportion < 0.05 ~ "1% to < 5%",
+          proportion < 0.10 ~ "5% to < 10%",
+          proportion < 0.15 ~ "10% to < 15%",
+          proportion < 0.20 ~ "15% to < 20%",
+          proportion < 0.30 ~ "20% to < 30%",
+          TRUE ~ "≥ 30%"
+        )
+      ) %>%
+      group_by(`CR Rate Range`) %>%
+      summarize(
+        `Number of Studies` = n(),
+        `% of Studies` = n() / nrow(first_method_data) * 100,
+        `Sample Size` = sum(sample_size),
+        `% of Total Sample` = sum(sample_size) / sum(first_method_data$sample_size) * 100,
+        .groups = "drop"
+      ) %>%
+      arrange(factor(`CR Rate Range`, 
+                    levels = c("< 1%", "1% to < 5%", "5% to < 10%", 
+                              "10% to < 15%", "15% to < 20%", 
+                              "20% to < 30%", "≥ 30%"))) %>%
+      mutate(
+        `Cumulative %` = cumsum(`% of Studies`),
+        `% of Studies` = round(`% of Studies`, 1),
+        `% of Total Sample` = round(`% of Total Sample`, 1),
+        `Cumulative %` = round(`Cumulative %`, 1)
+      )
+    
+    # Create descriptive statistics table
+    desc_stats <- data.frame(
+      Statistic = c("Mean", "Median", "Interquartile Range", "Minimum", "Maximum"),
+      Value = c(
+        round(mean(first_method_data$proportion) * 100, 1),
+        round(median(first_method_data$proportion) * 100, 1),
+        paste0(round(quantile(first_method_data$proportion, 0.25) * 100, 1), "% - ",
+               round(quantile(first_method_data$proportion, 0.75) * 100, 1), "%"),
+        round(min(first_method_data$proportion) * 100, 1),
+        round(max(first_method_data$proportion) * 100, 1)
+      )
+    )
+    
+    # Add distribution table to workbook
+    add_formatted_worksheet(
+      wb, "Distribution Table", distribution_table,
+      title = "Table 2: Distribution of Careless Responding Rates Across Studies (First-Method Approach)",
+      notes = paste0(
+        "Note. This table shows the distribution of careless responding rates across studies using the First-Method approach. ",
+        "The distribution provides a more detailed view beyond the overall pooled estimate by showing how individual study estimates ",
+        "are distributed across different ranges."
+      )
+    )
+    
+    # Add descriptive statistics below the distribution table
+    writeData(wb, "Distribution Table", "Descriptive Statistics", 
+              startRow = nrow(distribution_table) + 4)
+    writeData(wb, "Distribution Table", desc_stats, 
+              startRow = nrow(distribution_table) + 5)
+  }
+}
+
 # Main Execution ---------------------------------------------------------
 
 main <- function() {
@@ -869,6 +961,9 @@ main <- function() {
   # Process each section
   process_overall_results(wb)
   cat("✓ Compiled overall results\n")
+  
+  process_distribution_table(wb)
+  cat("✓ Compiled distribution table\n")
   
   process_method_results(wb)
   cat("✓ Compiled method analysis results\n")

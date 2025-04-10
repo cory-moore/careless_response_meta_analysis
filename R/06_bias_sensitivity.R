@@ -119,15 +119,17 @@ run_pub_bias_analysis <- function(data_obj, approach_name) {
   png(glue("output/figures/pub_bias/contour_funnel_{approach_name}.png"), 
       width = 8, height = 7, units = "in", res = 300)
   
-  # Build a contour-enhanced funnel plot
+  # Build a contour-enhanced funnel plot with proportions on x-axis and distinct colors
   funnel(meta_result, 
          level = c(0.1, 0.05, 0.01), 
-         shade = c("darkgray", "gray", "lightgray"),
+         shade = c("#FFFFFF", "#AAAAAA", "#555555"),  # White, medium gray, dark gray
          refline = meta_result$b,
          legend = TRUE,
          ylab = "Standard Error",
-         xlab = "Proportion of Careless Responses (logit scale)",
-         main = glue("Contour-Enhanced Funnel Plot - {approach_name} Approach"))
+         xlab = "Proportion of Careless Responses",
+         main = glue("Contour-Enhanced Funnel Plot - {approach_name} Approach"),
+         atransf = transf.ilogit,  # Transform x-axis to proportions
+         col.contour = "black")  # Make contour lines more visible
   
   dev.off()
   
