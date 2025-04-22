@@ -385,119 +385,108 @@ run_all_bivariate <- function(data, predictors, univariate_results, categorical_
   }
 }
 
-# Run multivariate model with top predictors
-run_multivariate_model <- function(data, univariate_results, categorical_vars, max_predictors = 5) {
-  # Basic validation
-  if(is.null(univariate_results) || nrow(univariate_results) < 2) {
-    message("  Insufficient univariate results for multivariate model")
-    return(NULL)
-  }
+# Run specific multivariate models
+run_specific_multivariate_models <- function(data, categorical_vars) {
+  # Define the three model combinations
+  model_combinations <- list(
+    c("cr_method", "journal", "sample_country"),
+    c("method_type", "journal", "sample_country"),
+    c("method_timing", "journal", "sample_country")
+  )
   
-  # Select promising predictors (p < 0.20)
-  promising_predictors <- univariate_results$moderator[univariate_results$QM_p < 0.20]
+  results <- list()
   
-  # Need at least 2 predictors for multivariate model
-  if(length(promising_predictors) < 2) {
-    message("  Insufficient promising predictors for multivariate model")
-    return(NULL)
-  }
-  
-  message(glue("  Found {length(promising_predictors)} promising predictors for multivariate model: {paste(promising_predictors, collapse=', ')}"))
-  
-  # Known redundant variables - remove redundant ones
-  if("method_type" %in% promising_predictors && "cr_method" %in% promising_predictors) {
-    # Keep the one with lower p-value
-    method_type_p <- univariate_results$QM_p[univariate_results$moderator == "method_type"]
-    cr_method_p <- univariate_results$QM_p[univariate_results$moderator == "cr_method"]
+  for (i in seq_along(model_combinations)) {
+    predictors <- model_combinations[[i]]
+    model_name <- paste(predictors, collapse = " + ")
+    message(glue("\nRunning multivariate model: {model_name}"))
     
-    if(method_type_p <= cr_method_p) {
-      message("  Removing cr_method due to redundancy with method_type")
-      promising_predictors <- promising_predictors[promising_predictors != "cr_method"]
-    } else {
-      message("  Removing method_type due to redundancy with cr_method")
-      promising_predictors <- promising_predictors[promising_predictors != "method_type"]
-    }
-  }
-  
-  # Limit to max_predictors, but ensure we have at least 2
-  promising_predictors <- promising_predictors[1:min(length(promising_predictors), max_predictors)]
-  
-  # Check for sufficient complete cases
-  complete_cases <- sum(complete.cases(data[, promising_predictors]))
-  if(complete_cases < 10) {
-    message(glue("  Insufficient complete cases ({complete_cases}) for multivariate model"))
-    return(NULL)
-  }
-  
-  message(glue("  Running multivariate model with promising predictors: {paste(promising_predictors, collapse=', ')}"))
-  
-  # Create formula
-  formula_parts <- sapply(promising_predictors, function(x) {
-    if(x %in% categorical_vars) paste0("factor(", x, ")") else x
-  })
-  
-  formula_str <- paste("logit_prop ~", paste(formula_parts, collapse = " + "))
-  
-  # Run model with error handling
-  tryCatch({
-    # Run null model
-    null_model <- rma(logit_prop, vi = var_logit, data = data, method = "REML")
-    
-    # Run multivariate model with warnings suppressed
-    model <- suppressWarnings(rma(as.formula(formula_str), vi = var_logit, data = data, method = "REML"))
-    
-    # Check if model has any predictors after redundancy removal
-    if(length(model$b) <= 1) {
-      message("  ** All predictors were dropped from the model")
-      return(NULL)
+    # Check for sufficient complete cases
+    complete_cases <- sum(complete.cases(data[, predictors]))
+    if(complete_cases < 10) {
+      message(glue("  Insufficient complete cases ({complete_cases}) for {model_name}"))
+      next
     }
     
-    # Calculate R-squared
-    r_squared <- max(0, (null_model$tau2 - model$tau2) / null_model$tau2)
+    # Create formula
+    formula_parts <- sapply(predictors, function(x) {
+      if(x %in% categorical_vars) paste0("factor(", x, ")") else x
+    })
     
-    # Extract coefficients
-    coefficients <- coef(summary(model)) %>%
-      as.data.frame() %>%
-      rownames_to_column("term") %>%
-      mutate(
-        model = "Multivariate",
-        term = str_remove(term, "factor\\("),
-        term = str_remove(term, "\\)"),
-        sig = case_when(
-          pval < 0.001 ~ "***",
-          pval < 0.01 ~ "**",
-          pval < 0.05 ~ "*",
-          pval < 0.1 ~ ".",
-          TRUE ~ ""
+    formula_str <- paste("logit_prop ~", paste(formula_parts, collapse = " + "))
+    
+    # Run model with error handling
+    tryCatch({
+      # Run null model
+      null_model <- rma(logit_prop, vi = var_logit, data = data, method = "REML")
+      
+      # Run multivariate model with warnings suppressed
+      model <- suppressWarnings(rma(as.formula(formula_str), vi = var_logit, data = data, method = "REML"))
+      
+      # Check if model has any predictors after redundancy removal
+      if(length(model$b) <= 1) {
+        message("  ** All predictors were dropped from the model")
+        next
+      }
+      
+      # Calculate R-squared
+      r_squared <- max(0, (null_model$tau2 - model$tau2) / null_model$tau2)
+      
+      # Extract coefficients
+      coefficients <- coef(summary(model)) %>%
+        as.data.frame() %>%
+        rownames_to_column("term") %>%
+        mutate(
+          model = model_name,
+          term = str_remove(term, "factor\\("),
+          term = str_remove(term, "\\)"),
+          sig = case_when(
+            pval < 0.001 ~ "***",
+            pval < 0.01 ~ "**",
+            pval < 0.05 ~ "*",
+            pval < 0.1 ~ ".",
+            TRUE ~ ""
+          )
         )
+      
+      # Save coefficients
+      ensure_output(
+        coefficients, 
+        glue("output/r_results/meta_regression/03_multivariate_coefficients_{i}.csv"),
+        glue("No valid coefficients for {model_name}")
       )
-    
-    # Save coefficients
-    ensure_output(
-      coefficients, 
-      "output/r_results/meta_regression/03_multivariate_coefficients.csv",
-      "No valid coefficients for multivariate model"
-    )
-    
-    # Return model summary
-    data.frame(
-      predictors = paste(promising_predictors, collapse = " + "),
-      n_predictors = length(model$b) - 1,
-      k = model$k,
-      QM = model$QM,
-      QM_df = model$p - 1,
-      QM_p = model$QMp,
-      R2 = r_squared,
-      tau2 = model$tau2,
-      I2 = model$I2,
-      AIC = calculate_safe_aic(model),
-      is_significant = model$QMp < 0.05,
-      stringsAsFactors = FALSE
-    )
-  }, error = function(e) {
-    message(glue("  ** Error in multivariate model: {e$message}"))
-    NULL
-  })
+      
+      # Create model summary
+      model_summary <- data.frame(
+        predictors = model_name,
+        n_predictors = length(model$b) - 1,
+        k = model$k,
+        QM = model$QM,
+        QM_df = model$p - 1,
+        QM_p = model$QMp,
+        R2 = r_squared,
+        tau2 = model$tau2,
+        I2 = model$I2,
+        AIC = calculate_safe_aic(model),
+        is_significant = model$QMp < 0.05,
+        stringsAsFactors = FALSE
+      )
+      
+      results[[model_name]] <- model_summary
+      
+      message(glue("  ** Successful model: R² = {round(r_squared*100, 1)}%, p = {format.pval(model$QMp)}"))
+      
+    }, error = function(e) {
+      message(glue("  ** Error in model {model_name}: {e$message}"))
+    })
+  }
+  
+  # Combine all results
+  if(length(results) > 0) {
+    return(do.call(rbind, results))
+  } else {
+    return(data.frame())
+  }
 }
 
 # Run temporal trend analysis
@@ -906,23 +895,20 @@ main <- function() {
     write_csv(bivar_coefs, "output/r_results/meta_regression/02_all_bivariate_coefficients.csv")
   }
   
-  # 3. Run multivariate model with best predictors
-  message("\nMULTIVARIATE META-REGRESSION")
+  # 3. Run specific multivariate models
+  message("\nSPECIFIC MULTIVARIATE MODELS")
   message("==========================")
   
-  # Use improved multivariate approach
-  multivariate_results <- run_multivariate_model(
-    data = data, 
-    univariate_results = all_univariate_results,
-    categorical_vars = categorical_vars,
-    max_predictors = 5
+  multivariate_results <- run_specific_multivariate_models(
+    data = data,
+    categorical_vars = categorical_vars
   )
   
   # Save multivariate results
   ensure_output(
     multivariate_results, 
     "output/r_results/meta_regression/03_multivariate_results.csv",
-    "No valid multivariate meta-regression model"
+    "No valid multivariate meta-regression models"
   )
   
   # 4. Run temporal trend analysis
