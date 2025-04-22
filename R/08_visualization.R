@@ -14,7 +14,7 @@ ggplot(method_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
   geom_point(aes(x = Pooled_Proportion), size = 3) +
   geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
   labs(
-    title = "Careless Responding Rates by Detection Method Type",
+    title = "Forest Plot of Careless Responding Rates by Detection Method Type",
     subtitle = "First-Method Approach (PRIMARY)",
     x = "Proportion of Careless Responses",
     y = "Detection Method Type"
@@ -25,7 +25,10 @@ ggplot(method_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
             hjust = 0) +
   theme_classic() +
   theme(
-    plot.title = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9),
     axis.text.y = element_text(face = "bold"),
     panel.background = element_rect(fill = "white")
   ) +
@@ -35,7 +38,7 @@ ggplot(method_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
 ggsave("output/figures/method_type_forest_plot.png", width = 10, height = 7, dpi = 300)  
 
 ##############################################
-# Forest Plot of Method Timing (A Priori vs. Post Hoc)
+# Forest Plot of Method Type (A Priori vs. Post Hoc)
 ##############################################
 timing_results <- read.csv("output/r_results/primary/subgroup_method_timing.csv")
 timing_results <- timing_results %>% arrange(desc(Pooled_Proportion))
@@ -44,10 +47,10 @@ ggplot(timing_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
   geom_point(aes(x = Pooled_Proportion), size = 3) +
   geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
   labs(
-    title = "Careless Responding Rates by Detection Method Timing",
+    title = "Forest Plot of Careless Responding Rates by Method Type",
     subtitle = "First-Method Approach (PRIMARY)",
     x = "Proportion of Careless Responses",
-    y = "Detection Method Timing"
+    y = "DetectionMethod Type"
   ) +
   scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
   geom_text(aes(x = max(timing_results$CI_Upper) * 1.1, 
@@ -55,7 +58,10 @@ ggplot(timing_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
             hjust = 0) +
   theme_classic() +
   theme(
-    plot.title = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9),
     axis.text.y = element_text(face = "bold"),
     panel.background = element_rect(fill = "white")
   ) +
@@ -64,7 +70,7 @@ ggplot(timing_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
 
 ggsave("output/figures/method_timing_forest_plot.png", width = 10, height = 5, dpi = 300)
 
-# Add combination plot comparing method type and method timing
+# Add combination plot comparing method types
 if(file.exists("output/r_results/primary/subgroup_method_type.csv") && 
    file.exists("output/r_results/primary/subgroup_method_timing.csv")) {
    
@@ -73,7 +79,7 @@ if(file.exists("output/r_results/primary/subgroup_method_type.csv") &&
   
   # Combine datasets with a classification column
   type_results$classification <- "Method Type"
-  timing_results$classification <- "Method Timing"
+  timing_results$classification <- "Method Type"
   
   combined_results <- rbind(
     select(type_results, Subgroup, Pooled_Proportion, CI_Lower, CI_Upper, k, classification),
@@ -89,7 +95,7 @@ if(file.exists("output/r_results/primary/subgroup_method_type.csv") &&
               hjust = 0) +
     facet_wrap(~classification, scales = "free_y", ncol = 1) +
     labs(
-      title = "Careless Responding Rates by Method Classification",
+      title = "Forest Plot of Careless Responding Rates by DetectionMethod Type",
       subtitle = "First-Method Approach (PRIMARY)",
       x = "Proportion of Careless Responses",
       y = ""
@@ -97,11 +103,14 @@ if(file.exists("output/r_results/primary/subgroup_method_type.csv") &&
     scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
     theme_classic() +
     theme(
-      plot.title = element_text(face = "bold"),
+      plot.title = element_text(face = "bold", size = 12),
+      plot.subtitle = element_text(size = 10),
+      axis.title = element_text(size = 10),
+      axis.text = element_text(size = 9),
       axis.text.y = element_text(face = "bold"),
       panel.background = element_rect(fill = "white"),
       strip.background = element_rect(fill = "lightblue"),
-      strip.text = element_text(face = "bold")
+      strip.text = element_text(face = "bold", size = 10)
     )
   
   ggsave("output/figures/method_classifications_comparison.png", width = 10, height = 8, dpi = 300)
@@ -127,22 +136,25 @@ if (has_zeros > 0) {
 es <- escalc(measure = "PLO", xi = events, ni = n)
 res <- rma(yi = es$yi, vi = es$vi, method = "DL")
 
+# Define helper functions
+logit <- function(p) log(p/(1-p))
+inv_logit <- function(x) exp(x)/(1+exp(x))
+
 png("output/figures/funnel_plot_standard.png", width = 8, height = 7, units = "in", res = 300)
 
 funnel(res, 
        xlab = "Proportion of Careless Responses",
        ylab = "Standard Error",
+       main = "Funnel Plot of Careless Responding Rates",
        atransf = transf.ilogit,
        ylim = c(1.5, 0),
        level = c(0.9, 0.95, 0.99),
        legend = TRUE,
        pch = 19,
-       refline = res$b)
+       refline = res$b,
+       col = "black")
 
 dev.off()
-
-logit <- function(p) log(p/(1-p))
-inv_logit <- function(x) exp(x)/(1+exp(x))
 
 png("output/figures/funnel_plot_complete.png", width = 10, height = 8, units = "in", res = 300)
 
@@ -150,6 +162,7 @@ plot(
   transf.ilogit(es$yi), sqrt(es$vi),
   xlab = "Proportion of Careless Responses", 
   ylab = "Standard Error",
+  main = "Funnel Plot of Careless Responding Rates",
   xlim = c(0, 0.5),
   ylim = c(1.5, 0),
   pch = 19,
@@ -157,7 +170,11 @@ plot(
   col = "black"
 )
 
-abline(v = inv_logit(res$b), lty = 2)
+# Add vertical line at pooled estimate
+abline(v = inv_logit(res$b), col = "red", lty = 2)
+# Add label for the vertical line
+axis(1, at = inv_logit(res$b), labels = paste0("Pooled\n", round(inv_logit(res$b), 3)), 
+     col.axis = "red", line = 0.5, tick = FALSE)
 
 dev.off()
 
@@ -171,7 +188,7 @@ ggplot(platform_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
   geom_point(aes(x = Pooled_Proportion), size = 3) +
   geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
   labs(
-    title = "Careless Responding Rates by Sample Platform",
+    title = "Forest Plot of Careless Responding Rates by Sample Platform",
     subtitle = "First-Method Approach (PRIMARY)",
     x = "Proportion of Careless Responses",
     y = "Sample Platform"
@@ -183,7 +200,10 @@ ggplot(platform_results, aes(y = reorder(Subgroup, Pooled_Proportion))) +
            hjust = 0) +
   theme_classic() +
   theme(
-    plot.title = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9),
     axis.text.y = element_text(face = "bold"),
     panel.background = element_rect(fill = "white")
   ) +
@@ -212,7 +232,7 @@ ggplot(year_results, aes(x = Year, y = Pooled_Proportion)) +
   geom_errorbar(aes(ymin = CI_Lower, ymax = CI_Upper), width = 0.2) +
   geom_line(data = pred_years, aes(x = Year, y = Predicted), linetype = "dashed", color = "blue") +
   labs(
-    title = "Temporal Trend in Careless Responding Rates (2014-2024)",
+    title = "Temporal Trend in Careless Responding Rates",
     subtitle = "First-Method Approach (PRIMARY)",
     x = "Publication Year",
     y = "Proportion of Careless Responses",
@@ -222,6 +242,10 @@ ggplot(year_results, aes(x = Year, y = Pooled_Proportion)) +
   scale_x_continuous(breaks = year_breaks) +
   theme_classic() +
   theme(
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9),
     panel.background = element_rect(fill = "white")
   )
 
@@ -236,10 +260,10 @@ ggplot(overall_data, aes(y = reorder(Analysis, Pooled_Proportion))) +
   geom_point(aes(x = Pooled_Proportion), size = 4, color = "black") +
   geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2, color = "black") +
   labs(
-    title = "Overall Careless Responding Prevalence",
+    title = "Forest Plot of Overall Careless Responding Prevalence",
     subtitle = "Comparison of Analytical Approaches",
     x = "Proportion of Careless Responses",
-    y = "",
+    y = "Analytical Approach",
     caption = "Error bars represent 95% confidence intervals"
   ) +
   scale_x_continuous(labels = scales::percent_format(accuracy = 0.1), 
@@ -250,16 +274,14 @@ ggplot(overall_data, aes(y = reorder(Analysis, Pooled_Proportion))) +
            hjust = 0) +
   theme_classic() +
   theme(
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 12),
-    axis.title.x = element_text(size = 12),
-    axis.text.y = element_text(face = "bold", size = 12),
-    panel.grid.minor = element_blank(),
-    panel.grid.major.y = element_blank(),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9),
     panel.background = element_rect(fill = "white")
   ) +
   coord_cartesian(clip = "off") +
-  theme(plot.margin = margin(10, 100, 10, 10)) 
+  theme(plot.margin = margin(10, 150, 10, 10))
 
 ggsave("output/figures/overall_approaches_forest.png", width = 10, height = 5, dpi = 300)  
 
