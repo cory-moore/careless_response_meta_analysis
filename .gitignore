@@ -12,9 +12,10 @@ output/
 data/for_r_meta/
 data/for_meta/
 data/processed/
+data/careless_data.csv
 
-!data/careless_data.csv
 !data/coded_study_data_all.xlsx
+!data/shared_studies_coded.xlsx
 
 .idea/
 .vscode/

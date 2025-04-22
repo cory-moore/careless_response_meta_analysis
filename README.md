@@ -7,8 +7,8 @@ This repository contains the complete analysis pipeline for a meta-analytic stud
 ```
 careless_meta/
 ├── data/                       # Data files
-│   ├── careless_data.csv       # Main dataset containing coded study information
-│   └── coded_study_data_all.xlsx # Raw data for reliability analysis
+│   ├── coded_study_data_all.xlsx # Main dataset for analysis
+│   └── shared_studies_coded.xlsx # Reliability analysis dataset
 ├── python/                     # Python preprocessing scripts
 │   ├── 00_preprocess.py        # Data cleaning and preparation
 │   ├── 01_counts.py            # Generate descriptive counts
@@ -42,17 +42,18 @@ careless_meta/
 
 The analysis requires two core data files in the `data/` directory:
 
-1. `careless_data.csv`: Main dataset containing coded study information, including:
+1. `coded_study_data_all.xlsx`: Main dataset containing:
    - Study characteristics
    - Sample information
    - Careless responding detection methods
    - Prevalence rates
    - Methodological details
 
-2. `coded_study_data_all.xlsx`: Raw data used for reliability analysis, containing:
-   - Original coding sheets
+2. `shared_studies_coded.xlsx`: Reliability analysis dataset containing:
+   - Shared studies coded by multiple raters
    - Inter-rater reliability data
-   - Coding decisions and notes
+
+These files are processed by the Python preprocessing pipeline to generate the analysis-ready datasets.
 
 ## Key Analytical Decisions
 
@@ -74,11 +75,6 @@ The analysis employs three complementary approaches to address different researc
    - Used for temporal trend analysis
 
 ## Reproducing the Analysis
-
-### Prerequisites
-- Python 3.8+ with packages: pandas, numpy, scipy, openpyxl
-- R 4.0+ with packages: meta, metafor, ggplot2, dplyr, viridis
-- Required data files in the `data/` directory
 
 ### Execution Steps
 
